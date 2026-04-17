@@ -1,0 +1,126 @@
+/* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
+
+:root {
+  --color-primary: #0B6E6E;
+  --color-accent: #F59E0B;
+  --color-danger: #DC2626;
+  --color-success: #16A34A;
+  --app-card-shadow: 0 1px 3px 0 rgb(15 23 42 / 0.06);
+  --clinical-primary: #2563eb;
+  --clinical-primary-soft: #eff6ff;
+  /* Flat dashboard shell */
+  --dash-page-bg: #f9fafb;
+  --dash-border: #e5e7eb;
+  --dash-primary: #3b82f6;
+  --dash-active-nav: #eff6ff;
+  --dash-green: #10b981;
+  --dash-red: #ef4444;
+  --dash-orange: #f97316;
+  --dash-text: #111827;
+  --dash-muted: #6b7280;
+
+  /* Unified foundation */
+  --app-page-bg: #f9fafb;
+  --app-surface: #ffffff;
+  --app-border: #e5e7eb;
+  --app-text: #111827;
+  --app-text-muted: #64748b;
+  --role-accent: #001d3d;
+  --role-accent-soft: rgb(0 29 61 / 0.14);
+}
+
+/* Role accents (sidebar, chips, borders — from product palette) */
+[data-app-role='chw'] {
+  /* Matches dashboard charts / tabs (teal-600) */
+  --role-accent: #0d9488;
+  --role-accent-soft: rgb(13 148 136 / 0.14);
+}
+
+[data-app-role='hc'] {
+  /* Visible steel / “military” blue — readable on white, pairs with shell chrome */
+  --role-accent: #3a6ea5;
+  --role-accent-soft: rgb(58 110 165 / 0.14);
+}
+
+[data-app-role='lc'] {
+  /* Same shell as health center — distinct enough via layout copy */
+  --role-accent: #2f6f8f;
+  --role-accent-soft: rgb(47 111 143 / 0.14);
+}
+
+[data-app-role='district'] {
+  --role-accent: #007ea7;
+  --role-accent-soft: rgb(0 126 167 / 0.12);
+}
+
+[data-app-role='referral'] {
+  --role-accent: #003554;
+  --role-accent-soft: rgb(0 53 84 / 0.14);
+}
+
+[data-app-role='rich'] {
+  --role-accent: #2563eb;
+  --role-accent-soft: rgb(37 99 235 / 0.12);
+}
+
+[data-app-role='pfth'] {
+  --role-accent: #0d9488;
+  --role-accent-soft: rgb(13 148 136 / 0.14);
+}
+
+[data-app-role='sfr'] {
+  --role-accent: #7c3aed;
+  --role-accent-soft: rgb(124 58 237 / 0.14);
+}
+
+[data-app-role='admin'] {
+  --role-accent: #001d3d;
+  --role-accent-soft: rgb(0 29 61 / 0.14);
+}
+
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+}
+* {
+  box-sizing: border-box;
+}
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+/* Mobile touch targets */
+@media (max-width: 640px) {
+  button, a, input, select, textarea {
+    min-height: 48px;
+  }
+}

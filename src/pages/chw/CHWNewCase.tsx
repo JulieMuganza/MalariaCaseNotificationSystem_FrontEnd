@@ -11,8 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  DISTRICTS_BY_PROVINCE,
-  provinceFromDistrict,
+  ALL_DISTRICTS,
   SECTORS_BY_DISTRICT,
   SEVERE_SYMPTOMS,
   getSymptomLabel,
@@ -130,7 +129,7 @@ export function CHWNewCase() {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
-  const { user, refreshNotifications } = useAuth();
+  const { refreshNotifications } = useAuth();
   const { refresh } = useCasesApi();
   const [step, setStep] = useState(0);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -154,14 +153,8 @@ export function CHWNewCase() {
     'HEALTH_CENTER' | 'LOCAL_CLINIC'
   >('HEALTH_CENTER');
 
-  const chwHomeProvince = useMemo(
-    () => provinceFromDistrict(user?.district),
-    [user?.district]
-  );
-
-  const districtOptions = useMemo((): District[] => {
-    return [...DISTRICTS_BY_PROVINCE[chwHomeProvince]] as District[];
-  }, [chwHomeProvince]);
+  /** Patient location — all districts (same routing rules everywhere; not limited to CHW home province). */
+  const districtOptions = useMemo((): District[] => [...ALL_DISTRICTS] as District[], []);
 
   useEffect(() => {
     if (
@@ -415,8 +408,8 @@ export function CHWNewCase() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 <p className="text-xs text-gray-500 md:col-span-2 -mt-2">
                   {language === 'en'
-                    ? `Location is limited to districts in ${chwHomeProvince} (from your account).`
-                    : `Aho uherereye: akarere ni ako mu ${chwHomeProvince} (ku konti yawe).`}
+                    ? 'Select the patient’s district and location (all provinces). First-line facility routing uses this district.'
+                    : 'Hitamo akarere n’aho umurwayi aherereye (intara zose). Ikigo cy’ibanze gisanga ikimenyetso kuri aka karere.'}
                 </p>
                 <SelectField
                 label="District"

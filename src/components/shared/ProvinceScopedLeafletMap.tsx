@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import {
   MapContainer,
   TileLayer,
   Circle,
   ZoomControl,
   useMap,
+  useMapEvents,
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { MalariaCase } from '../../types/domain';
@@ -47,6 +48,63 @@ function heatOpacity(count: number, max: number): number {
   if (max <= 0) return 0.14;
   const t = Math.min(1, count / max);
   return 0.14 + t * 0.38;
+}
+
+/**
+ * Case dots: radius in meters derived from zoom so on-screen size shrinks when zooming in
+ * (fixed-meter circles grow too large visually at high zoom).
+ */
+function CaseDotsLayer({
+  dotCases,
+  districtCentroids,
+  fallbackCenter,
+}: {
+  dotCases: MalariaCase[];
+  districtCentroids: Record<string, [number, number]>;
+  fallbackCenter: [number, number];
+}) {
+  const map = useMap();
+  const [, bump] = useReducer((n: number) => n + 1, 0);
+  useMapEvents({
+    zoomend: bump,
+    moveend: bump,
+  });
+
+  const z = map.getZoom();
+  const lat = map.getCenter().lat;
+  const mpp =
+    (40075017 * Math.cos((lat * Math.PI) / 180)) /
+    (256 * Math.pow(2, z));
+  /** Target pixel radius on screen — smaller at higher zoom */
+  const pxRadius = Math.max(3, Math.min(14, 30 - z * 1.35));
+
+  return (
+    <>
+      {dotCases.map((c, i) => {
+        const d = c.district ?? '';
+        const base = districtCentroids[d] ?? fallbackCenter;
+        const pos = jitterLatLng(base, c.id, i);
+        const deceased = c.status === 'Deceased';
+        const severe = !deceased && c.symptoms.length >= 5;
+        const color = deceased ? '#991b1b' : severe ? '#dc2626' : '#f59e0b';
+        const scale = deceased ? 1.12 : severe ? 1.05 : 1;
+        return (
+          <Circle
+            key={`${c.id}-${i}`}
+            center={pos}
+            radius={pxRadius * mpp * scale}
+            pathOptions={{
+              color,
+              fillColor: color,
+              fillOpacity: 0.88,
+              weight: 1,
+              opacity: 0.95,
+            }}
+          />
+        );
+      })}
+    </>
+  );
 }
 
 function FlyToDistrict({
@@ -145,29 +203,11 @@ export function ProvinceScopedLeafletMap({
             );
           })}
 
-        {dotCases.map((c, i) => {
-          const d = c.district ?? '';
-          const base = districtCentroids[d] ?? fallbackCenter;
-          const pos = jitterLatLng(base, c.id, i);
-          const deceased = c.status === 'Deceased';
-          const severe = !deceased && c.symptoms.length >= 5;
-          const color = deceased ? '#991b1b' : severe ? '#dc2626' : '#f59e0b';
-          const radiusM = deceased ? 950 : severe ? 800 : 650;
-          return (
-            <Circle
-              key={`${c.id}-${i}`}
-              center={pos}
-              radius={radiusM}
-              pathOptions={{
-                color,
-                fillColor: color,
-                fillOpacity: 0.88,
-                weight: 1,
-                opacity: 0.95,
-              }}
-            />
-          );
-        })}
+        <CaseDotsLayer
+          dotCases={dotCases}
+          districtCentroids={districtCentroids}
+          fallbackCenter={fallbackCenter}
+        />
       </MapContainer>
 
       <div className="pointer-events-none absolute bottom-2 left-2 z-[500] flex flex-wrap items-center gap-3 rounded-lg bg-white/90 px-2 py-1.5 text-[10px] text-gray-600 shadow-sm backdrop-blur-sm">

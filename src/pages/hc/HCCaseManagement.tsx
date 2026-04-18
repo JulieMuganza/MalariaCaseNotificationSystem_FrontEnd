@@ -20,7 +20,14 @@ import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { ConfirmModal } from '../../components/shared/ConfirmModal';
 import type { MalariaCase } from '../../types/domain';
+import { ApiRequestError } from '../../lib/api';
 import { useFirstLineBasePath } from './useFirstLineBasePath';
+
+function errorMessage(e: unknown): string {
+  if (e instanceof ApiRequestError) return e.message;
+  if (e instanceof Error) return e.message;
+  return 'Unknown error';
+}
 
 const sectionHeaderClass =
   'mb-4 flex items-center gap-2 border-b border-gray-100 pb-3';
@@ -170,6 +177,18 @@ export function HCCaseManagement() {
     return { val: (weight * 3.2).toFixed(1), unit: 'mg', label: 'Artemeter IM (3.2mg/kg)' };
   }, [weight, selectedDrug]);
 
+  /** Must run on every render (before any return) — same deps as treatment/pre-transfer UI. */
+  const preTransferLines = useMemo(() => {
+    const modeLine = `Pre-transfer mode: ${preTransferType}`;
+    const doseLines = treatmentLog.map(
+      (e) => `${e.drug} ${e.dose} ${e.route} @ ${new Date(e.time).toLocaleString()}`
+    );
+    if (preTransferType === 'Out of stock') {
+      return [modeLine];
+    }
+    return [modeLine, ...doseLines];
+  }, [preTransferType, treatmentLog]);
+
   if ((loading || fetchingCase) && !c) {
     return (
       <div className="p-20 text-center text-sm font-medium text-gray-400 animate-pulse">
@@ -208,17 +227,6 @@ export function HCCaseManagement() {
   const hcSymptomsPatch =
     triageSymptoms.length > 0 ? { symptoms: triageSymptoms } : {};
 
-  const preTransferLines = useMemo(() => {
-    const modeLine = `Pre-transfer mode: ${preTransferType}`;
-    const doseLines = treatmentLog.map(
-      (e) => `${e.drug} ${e.dose} ${e.route} @ ${new Date(e.time).toLocaleString()}`
-    );
-    if (preTransferType === 'Out of stock') {
-      return [modeLine];
-    }
-    return [modeLine, ...doseLines];
-  }, [preTransferType, treatmentLog]);
-
   const saveClinicalData = async (extraUpdate: Record<string, unknown> = {}) => {
     setSaving(true);
     try {
@@ -236,7 +244,9 @@ export function HCCaseManagement() {
       toast.success(en ? 'Clinical record updated' : 'Amakuru yabitswe');
       return true;
     } catch (e) {
-      toast.error('Sync failed');
+      toast.error(
+        en ? `Save failed: ${errorMessage(e)}` : `Byanze: ${errorMessage(e)}`
+      );
       return false;
     } finally {
       setSaving(false);
@@ -277,7 +287,12 @@ export function HCCaseManagement() {
       );
       navigate(base);
     } catch (e) {
-      toast.error(en ? 'Referral failed — check connection and try again.' : 'Byanze');
+      const detail = errorMessage(e);
+      toast.error(
+        en
+          ? `Referral failed: ${detail}`
+          : `Kohereza byanze: ${detail}`
+      );
     } finally {
       setSaving(false);
     }

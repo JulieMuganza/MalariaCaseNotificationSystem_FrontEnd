@@ -103,7 +103,13 @@ export interface MalariaCase {
   updatedAt: string;
   timeline: CaseTimeline[];
   chwTransferDateTime?: string;
-  chwReferralTransport?: 'Self' | 'With CHW' | 'Ambulance';
+  chwReferralTransport?:
+    | 'Walk'
+    | 'Motorcycle'
+    | 'Car'
+    | 'Self'
+    | 'With CHW'
+    | 'Ambulance';
   hcPatientReceivedDateTime?: string;
   hcPatientTransferredToHospitalDateTime?: string;
   hcReferralToHospitalTransport?: 'Self' | 'With relative' | 'Ambulance';

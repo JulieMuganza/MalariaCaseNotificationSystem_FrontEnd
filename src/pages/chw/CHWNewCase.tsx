@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   ALL_DISTRICTS,
+  provinceFromDistrict,
   SECTORS_BY_DISTRICT,
   SEVERE_SYMPTOMS,
   getSymptomLabel,
@@ -30,6 +31,7 @@ const STEPS = [
   'Review',
 ];
 
+/** Default for `transportMode` on create (general travel to care). */
 const ARRIVAL_TRANSPORT_DEFAULT = 'Walk';
 
 function StepIndicator({ current, total }: {current: number;total: number;}) {
@@ -149,9 +151,6 @@ export function CHWNewCase() {
   const [insuranceType, setInsuranceType] = useState('');
   const [rapidTestResult, setRapidTestResult] = useState<'Positive' | 'Negative' | ''>('');
   const [symptoms, setSymptoms] = useState<string[]>([]);
-  const [chwPrimaryReferral, setChwPrimaryReferral] = useState<
-    'HEALTH_CENTER' | 'LOCAL_CLINIC'
-  >('HEALTH_CENTER');
 
   /** Patient location — all districts (same routing rules everywhere; not limited to CHW home province). */
   const districtOptions = useMemo((): District[] => [...ALL_DISTRICTS] as District[], []);
@@ -184,7 +183,6 @@ export function CHWNewCase() {
   useEffect(() => {
     if (rapidTestResult === 'Negative') {
       setSymptoms([]);
-      setChwPrimaryReferral('HEALTH_CENTER');
     }
   }, [rapidTestResult]);
 
@@ -290,6 +288,9 @@ export function CHWNewCase() {
       patientId: code,
       sex: sex === 'Female' ? 'Female' : 'Male',
       dateOfBirth: dobStr,
+      ...(district.trim()
+        ? { province: provinceFromDistrict(district) }
+        : {}),
       district,
       sector,
       cell: cell.trim() || 'Unknown',
@@ -328,9 +329,9 @@ export function CHWNewCase() {
       llinStatus: undefined,
       sleepsUnderLLIN: undefined,
       chwTransferDateTime: new Date().toISOString(),
-      chwReferralTransport: 'Self',
+      chwReferralTransport: 'Walk' as const,
       ...(rapidTestResult === 'Positive' && symptoms.length > 0
-        ? { chwPrimaryReferral }
+        ? { chwPrimaryReferral: 'HEALTH_CENTER' as const }
         : {}),
     };
   }
@@ -624,39 +625,6 @@ export function CHWNewCase() {
                         {symptoms.length > 1 ? 's' : ''} selected
                       </p>
                     )}
-                    {symptoms.length > 0 && (
-                      <div className="mt-6 rounded-xl border border-amber-100 bg-amber-50/60 p-4">
-                        <RadioCards
-                          label={
-                            language === 'en'
-                              ? 'Refer this severe case to'
-                              : 'Ohereza iyi mpfura ku'
-                          }
-                          value={
-                            chwPrimaryReferral === 'LOCAL_CLINIC'
-                              ? language === 'en'
-                                ? 'Local clinic'
-                                : 'Ivuriro rito'
-                              : language === 'en'
-                                ? 'Health center'
-                                : 'Ikigo nderabuzima'
-                          }
-                          onChange={(v) => {
-                            const lc =
-                              v === 'Local clinic' || v === 'Ivuriro rito';
-                            setChwPrimaryReferral(
-                              lc ? 'LOCAL_CLINIC' : 'HEALTH_CENTER'
-                            );
-                          }}
-                          options={
-                            language === 'en'
-                              ? ['Health center', 'Local clinic']
-                              : ['Ikigo nderabuzima', 'Ivuriro rito']
-                          }
-                          required
-                        />
-                      </div>
-                    )}
                   </>
                 )}
 
@@ -704,18 +672,6 @@ export function CHWNewCase() {
                           rapidTestResult === 'Positive' && symptoms.length > 0
                             ? 'Referral starts (severe case alert)'
                             : 'Closed at CHW (non-severe, no transfer)',
-                        ],
-                        [
-                          language === 'en' ? 'Referral destination' : 'Aho kohereza',
-                          rapidTestResult === 'Positive' && symptoms.length > 0
-                            ? chwPrimaryReferral === 'LOCAL_CLINIC'
-                              ? language === 'en'
-                                ? 'Local clinic'
-                                : 'Ivuriro rito'
-                              : language === 'en'
-                                ? 'Health center'
-                                : 'Ikigo nderabuzima'
-                            : '—',
                         ],
                         ...symptoms.map((s) => [
                           getSymptomLabel(s, language),
@@ -799,12 +755,8 @@ export function CHWNewCase() {
         message={
           rapidTestResult === 'Positive' && symptoms.length > 0
             ? language === 'en'
-              ? chwPrimaryReferral === 'LOCAL_CLINIC'
-                ? 'This will notify the local clinic and RICH about this suspected severe malaria case. Ensure the patient is referred according to protocol.'
-                : 'This will notify the health center and RICH about this suspected severe malaria case. Ensure the patient is referred according to protocol.'
-              : chwPrimaryReferral === 'LOCAL_CLINIC'
-                ? 'Ibi bizamenyesha ivuriro rito n’RICH ku mpfura y’imalariya ikomeye. Kohereza umurwayi uko biteganyijwe.'
-                : 'Ibi bizamenyesha ikigo n’RICH ku mpfura y’imalariya ikomeye. Kohereza umurwayi uko biteganyijwe.'
+              ? 'This will notify the health center and RICH about this suspected severe malaria case. Ensure the patient is referred according to protocol.'
+              : 'Ibi bizamenyesha ikigo n’RICH ku mpfura y’imalariya ikomeye. Kohereza umurwayi uko biteganyijwe.'
             : language === 'en'
               ? 'No alert will be sent. The case will be saved and marked as resolved at CHW (non-severe malaria, no transfer).'
               : 'Nta butumwa buzoherezwa. Dosiye irabika mu buryo bwawe.'
@@ -844,12 +796,8 @@ export function CHWNewCase() {
               <p className="text-xs text-gray-500 mb-6">
                 {rapidTestResult === 'Positive' && symptoms.length > 0
                   ? language === 'en'
-                    ? chwPrimaryReferral === 'LOCAL_CLINIC'
-                      ? 'The local clinic has been notified. Routing you to the dashboard...'
-                      : 'The health center has been notified. Routing you to the dashboard...'
-                    : chwPrimaryReferral === 'LOCAL_CLINIC'
-                      ? 'Ivuriro rito ryamenyeshejwe. Tujya ku rubuga rwawe...'
-                      : 'Ikigo cyamenyeshejwe. Tujya ku rubuga rwawe...'
+                    ? 'The health center has been notified. Routing you to the dashboard...'
+                    : 'Ikigo cyamenyeshejwe. Tujya ku rubuga rwawe...'
                   : language === 'en'
                     ? 'No alert was sent. Case closed at CHW as non-severe malaria. Routing you to the dashboard...'
                     : 'Nta butumwa bwoherejwe. Tujya ku rubuga rwawe...'}

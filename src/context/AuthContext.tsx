@@ -41,6 +41,7 @@ type AuthContextValue = {
   refreshNotifications: () => Promise<void>;
   refreshMessageUnread: () => Promise<void>;
   markNotificationRead: (id: string) => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -210,6 +211,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const markAllNotificationsRead = useCallback(async () => {
+    await apiFetch<{ data: { count: number } }>('/api/v1/notifications/read-all', {
+      method: 'PATCH',
+    });
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
   const logout = useCallback(async () => {
     const refresh = localStorage.getItem('refreshToken');
     try {
@@ -254,6 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshNotifications,
     refreshMessageUnread,
     markNotificationRead,
+    markAllNotificationsRead,
   };
 
   return (

@@ -36,6 +36,8 @@
   "chw.layout.profile.fallbackName": "CHW User",
   "chw.layout.profile.fallbackRole": "CHW",
   "chw.layout.fab.newCase": "New Case",
+  "chw.layout.drawer.preferences": "Preferences",
+  "chw.layout.drawer.language": "Language",
   "rich.layout.nav.dashboard": "Dashboard",
   "rich.layout.nav.cases": "Cases",
   "rich.layout.nav.patients": "Patients",

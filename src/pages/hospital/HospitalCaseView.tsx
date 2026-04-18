@@ -15,6 +15,7 @@ import { useHospitalBasePath } from './useHospitalBasePath';
 import type { MalariaCase } from '../../types/domain';
 import { ReferralHospitalCaseOverview } from './ReferralHospitalCaseOverview';
 import { mergedSymptoms } from './caseHelpers';
+import { DhNoPreTransferTreatmentModal } from './DhNoPreTransferTreatmentModal';
 
 type HospitalTab = 'pathway' | 'overview' | 'record';
 
@@ -251,6 +252,12 @@ export function HospitalCaseView() {
 
       {activeTab === 'record' && (
         <div className="space-y-4">
+          {isDH && c.transferredToReferralHospital && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <strong>Transferred to referral hospital.</strong> This patient left district hospital care; the record
+              below is kept for continuity. Editing here is disabled — use referral hospital for ongoing care.
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <SummaryCard
               title="Demographics"
@@ -460,6 +467,7 @@ function DistrictHospitalPathway({
   const [referralTransport, setReferralTransport] = useState<
     '' | 'Self' | 'With relative' | 'Ambulance'
   >(() => c.dhReferralToReferralHospitalTransport ?? '');
+  const [dhArtModalOpen, setDhArtModalOpen] = useState(false);
 
   useEffect(() => {
     setReferralTransport(c.dhReferralToReferralHospitalTransport ?? '');
@@ -513,6 +521,24 @@ function DistrictHospitalPathway({
 
   return (
     <section className="space-y-6">
+      <DhNoPreTransferTreatmentModal
+        open={dhArtModalOpen}
+        onClose={() => setDhArtModalOpen(false)}
+        existingHcPreTreatment={hcLines}
+        onSave={async (lines) => {
+          await patchCase(c.id, {
+            dhHcPreTransferReceived: false,
+            hcPreTreatment: lines,
+            timelineEvent: {
+              event:
+                'DH pre-transfer treatment recorded (no HC handoff — weight & anti-malarial dosing)',
+              actorName: userName ?? 'District Hospital',
+              actorRole: 'District Hospital',
+            },
+          });
+          toast.success('Pre-transfer treatment at DH saved');
+        }}
+      />
       <div className="rounded-2xl border border-[color:var(--role-accent)]/25 bg-[color:var(--role-accent-soft)] p-6 shadow-sm">
         <h3 className="text-base font-semibold text-[color:var(--role-accent)]">
           Severe malaria — district hospital pathway
@@ -661,20 +687,7 @@ function DistrictHospitalPathway({
           <button
             type="button"
             disabled={pathBusy || !received}
-            onClick={() =>
-              run(async () => {
-                await patchCase(c.id, {
-                  dhHcPreTransferReceived: false,
-                  timelineEvent: {
-                    event:
-                      'HC pre-transfer not received or incomplete — plan to give at DH',
-                    actorName: userName ?? 'District Hospital',
-                    actorRole: 'District Hospital',
-                  },
-                });
-                toast.success('Recorded — complete pre-transfer at DH');
-              })
-            }
+            onClick={() => setDhArtModalOpen(true)}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
           >
             No / incomplete — give at DH

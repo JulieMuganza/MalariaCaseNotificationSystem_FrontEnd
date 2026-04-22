@@ -31,25 +31,25 @@ export function CHWReports() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
-          label="Total Cases" 
+          label={en ? 'Total cases' : 'Ibibazo byose'} 
           value={totalCases} 
           icon={<BarChart3Icon size={20} />} 
           color="teal" 
         />
         <StatCard 
-          label="Resolution Rate" 
+          label={en ? 'Resolution rate' : 'Igipimo cyakemutse'} 
           value={`${resolutionRate}%`} 
           icon={<TrendingUpIcon size={20} />} 
           color="blue" 
         />
         <StatCard 
-          label="Active Cases" 
+          label={en ? 'Active cases' : 'Ibibazo bikiriho'} 
           value={pending + referred} 
           icon={<ActivityIcon size={20} />} 
           color="amber" 
         />
         <StatCard 
-          label="Total Patients" 
+          label={en ? 'Total patients' : 'Abarwayi bose'} 
           value={new Set(cases.map(c => c.patientCode)).size} 
           icon={<UsersIcon size={20} />} 
           color="indigo" 
@@ -61,9 +61,9 @@ export function CHWReports() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
           <h3 className="text-sm font-bold text-gray-900 mb-6">{en ? 'Case Status Distribution' : 'Ikwegereze ry\'imanza'}</h3>
           <div className="space-y-4">
-            <StatusProgressBar label="Resolved" count={resolved} total={totalCases} color="bg-teal-500" />
-            <StatusProgressBar label="Referred" count={referred} total={totalCases} color="bg-amber-500" />
-            <StatusProgressBar label="Pending" count={pending} total={totalCases} color="bg-gray-400" />
+            <StatusProgressBar label={en ? 'Resolved' : 'Byakemutse'} count={resolved} total={totalCases} color="bg-teal-500" />
+            <StatusProgressBar label={en ? 'Referred' : 'Byoherejwe'} count={referred} total={totalCases} color="bg-amber-500" />
+            <StatusProgressBar label={en ? 'Pending' : 'Bitegereje'} count={pending} total={totalCases} color="bg-gray-400" />
           </div>
         </div>
 

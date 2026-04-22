@@ -35,6 +35,32 @@ export function HCNewCase() {
   const [insuranceYesNo, setInsuranceYesNo] = useState<'Yes' | 'No' | ''>('');
   const [insuranceType, setInsuranceType] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const sexOptions = en
+    ? [
+        { value: 'Male' as const, label: 'Male' },
+        { value: 'Female' as const, label: 'Female' },
+      ]
+    : [
+        { value: 'Male' as const, label: 'Gabo' },
+        { value: 'Female' as const, label: 'Gore' },
+      ];
+  const yesNoOptions = en
+    ? [
+        { value: 'Yes' as const, label: 'Yes' },
+        { value: 'No' as const, label: 'No' },
+      ]
+    : [
+        { value: 'Yes' as const, label: 'Yego' },
+        { value: 'No' as const, label: 'Oya' },
+      ];
+  const insuranceTypeOptions = en
+    ? ['CBHI', 'RAMA', 'MMI', 'Other']
+    : [
+        { value: 'CBHI', label: 'CBHI' },
+        { value: 'RAMA', label: 'RAMA' },
+        { value: 'MMI', label: 'MMI' },
+        { value: 'Other', label: 'Ibindi' },
+      ];
 
   const sectors = district ? SECTORS_BY_DISTRICT[district as District] || [] : [];
 
@@ -116,7 +142,7 @@ export function HCNewCase() {
       toast.success(en ? 'Case created. Continue care in clinical management.' : 'Dosiye yakozwe. Komeza ubuvuzi.');
       navigate(`${base}/triage`, { state: { tab: 'at_hc' } });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to create case');
+      toast.error(e instanceof Error ? e.message : en ? 'Failed to create case' : 'Kurema dosiye byanze');
     } finally {
       setSubmitting(false);
     }
@@ -151,21 +177,21 @@ export function HCNewCase() {
             <option value="">{en ? 'Sector' : 'Umurenge'}</option>
             {sectors.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
-          <input className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm" placeholder="Cell" value={cell} onChange={(e) => setCell(e.target.value)} />
-          <input className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm" placeholder="Village" value={village} onChange={(e) => setVillage(e.target.value)} />
+          <input className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm" placeholder={en ? 'Cell' : 'Akagari'} value={cell} onChange={(e) => setCell(e.target.value)} />
+          <input className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm" placeholder={en ? 'Village' : 'Umudugudu'} value={village} onChange={(e) => setVillage(e.target.value)} />
         </div>
 
         <h2 className="mt-6 text-sm font-semibold uppercase tracking-widest text-gray-500">
           {en ? 'Personal information' : 'Amakuru y\'umurwayi'}
         </h2>
         <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <input className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm" placeholder="Patient name" value={patientName} onChange={(e) => setPatientName(e.target.value)} />
+          <input className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm" placeholder={en ? 'Patient name' : 'Izina ry\'umurwayi'} value={patientName} onChange={(e) => setPatientName(e.target.value)} />
           <input className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm" type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase text-gray-500">Gender</p>
+            <p className="mb-2 text-xs font-semibold uppercase text-gray-500">{en ? 'Gender' : 'Igitsina'}</p>
             <div className="flex gap-2">
-              {(['Male', 'Female'] as const).map((s) => (
-                <button key={s} type="button" className={cardBtn(sex === s)} onClick={() => setSex(s)}>{s}</button>
+              {sexOptions.map((s) => (
+                <button key={s.value} type="button" className={cardBtn(sex === s.value)} onClick={() => setSex(s.value)}>{s.label}</button>
               ))}
             </div>
           </div>
@@ -176,27 +202,32 @@ export function HCNewCase() {
         </div>
 
         <div className="mt-5">
-          <p className="mb-2 text-xs font-semibold uppercase text-gray-500">Insurance</p>
+          <p className="mb-2 text-xs font-semibold uppercase text-gray-500">{en ? 'Insurance' : 'Ubwishingizi'}</p>
           <div className="flex gap-2">
-            {(['Yes', 'No'] as const).map((v) => (
+            {yesNoOptions.map((v) => (
               <button
-                key={v}
+                key={v.value}
                 type="button"
-                className={cardBtn(insuranceYesNo === v)}
+                className={cardBtn(insuranceYesNo === v.value)}
                 onClick={() => {
-                  setInsuranceYesNo(v);
-                  if (v === 'No') setInsuranceType('');
+                  setInsuranceYesNo(v.value);
+                  if (v.value === 'No') setInsuranceType('');
                 }}
               >
-                {v}
+                {v.label}
               </button>
             ))}
           </div>
           {insuranceYesNo === 'Yes' && (
             <div className="mt-2 flex flex-wrap gap-2">
-              {['CBHI', 'RAMA', 'MMI', 'Other'].map((i) => (
-                <button key={i} type="button" className={cardBtn(insuranceType === i)} onClick={() => setInsuranceType(i)}>{i}</button>
-              ))}
+              {insuranceTypeOptions.map((i) => {
+                const item = typeof i === 'string' ? { value: i, label: i } : i;
+                return (
+                  <button key={item.value} type="button" className={cardBtn(insuranceType === item.value)} onClick={() => setInsuranceType(item.value)}>
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

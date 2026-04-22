@@ -36,7 +36,7 @@ export function AuthWebLayout({
             <div className="flex shrink-0 items-center">{headerLeft}</div>
           ) : null}
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#3B82F6] text-white lg:h-12 lg:w-12">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white lg:h-12 lg:w-12">
               <ActivityIcon size={26} strokeWidth={2} />
             </div>
             <div className="min-w-0">
@@ -57,12 +57,12 @@ export function AuthWebLayout({
         <div className="mx-auto grid w-full max-w-[1280px] flex-1 grid-cols-1 gap-8 px-5 py-10 sm:px-8 lg:grid-cols-12 lg:gap-16 lg:px-12 lg:py-14">
           <section className="flex flex-col justify-center lg:col-span-5">
             <div className="mb-2 lg:mb-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#3B82F6] lg:text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary lg:text-sm">
                 {t('auth.shell.brand.name')}
               </p>
               <h2 className="mt-2 text-2xl font-bold leading-tight text-[#111827] sm:text-3xl lg:text-4xl lg:leading-tight">
                 {t('auth.shell.hero.titleLead')}{' '}
-                <span className="text-[#3B82F6]">{t('auth.shell.hero.highlight')}</span>
+                <span className="text-primary">{t('auth.shell.hero.highlight')}</span>
               </h2>
               <p className="mt-4 max-w-md text-sm leading-relaxed text-[#6B7280] lg:text-base">
                 {t('auth.shell.hero.body')}
@@ -70,21 +70,21 @@ export function AuthWebLayout({
               <ul className="mt-6 hidden space-y-3 sm:block">
                 <li className="flex items-start gap-3 text-sm text-[#374151]">
                   <ShieldCheckIcon
-                    className="mt-0.5 h-5 w-5 shrink-0 text-[#3B82F6]"
+                    className="mt-0.5 h-5 w-5 shrink-0 text-primary"
                     strokeWidth={2}
                   />
                   <span>{t('auth.shell.bullet.access')}</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm text-[#374151]">
                   <UsersIcon
-                    className="mt-0.5 h-5 w-5 shrink-0 text-[#3B82F6]"
+                    className="mt-0.5 h-5 w-5 shrink-0 text-primary"
                     strokeWidth={2}
                   />
                   <span>{t('auth.shell.bullet.handoffs')}</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm text-[#374151]">
                   <BellIcon
-                    className="mt-0.5 h-5 w-5 shrink-0 text-[#3B82F6]"
+                    className="mt-0.5 h-5 w-5 shrink-0 text-primary"
                     strokeWidth={2}
                   />
                   <span>{t('auth.shell.bullet.notifications')}</span>

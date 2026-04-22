@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LanguageToggle } from '../components/shared/LanguageToggle';
 
-import heroImage from '../assets/img/Image 10.jpg';
-import teamImage from '../assets/img/Image 9.jpg';
-import patientImage from '../assets/img/Image 11.jpg';
+import heroImage from '../assets/img/Image (11).jpg';
+import teamImage from '../assets/img/Image (9).jpg';
+import patientImage from '../assets/img/Image (7).jpg';
 
 export function LandingPage() {
   const [showTopBtn, setShowTopBtn] = useState(false);
@@ -47,7 +48,8 @@ export function LandingPage() {
             <a href="#features" onClick={(e) => handleNavClick(e, 'features')} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">Features</a>
             <a href="#trust" onClick={(e) => handleNavClick(e, 'trust')} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">Impact</a>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <LanguageToggle variant="light" />
             <Link 
               to="/login?mode=login" 
               className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
@@ -115,7 +117,7 @@ export function LandingPage() {
               <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl">
                 <img 
                   src={heroImage} 
-                  alt="Doctor with patient" 
+                  alt="Mosquito over Rwanda map" 
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-gray-900/0 to-gray-900/0"></div>
@@ -210,7 +212,7 @@ export function LandingPage() {
                 <div className="overflow-hidden rounded-3xl shadow-lg bg-gray-100 aspect-[3/4]">
                   <img
                     src={teamImage}
-                    alt="Medical team"
+                    alt="Mosquito surveillance illustration"
                     className="h-full w-full object-cover object-center"
                   />
                 </div>
@@ -219,7 +221,7 @@ export function LandingPage() {
                 <div className="overflow-hidden rounded-3xl shadow-lg bg-gray-100 aspect-[3/4]">
                   <img
                     src={patientImage}
-                    alt="Patient consulting"
+                    alt="Malaria vector awareness illustration"
                     className="h-full w-full object-cover object-center"
                   />
                 </div>

@@ -41,7 +41,7 @@ export function RichMapPage() {
         accent="rich"
         provinceScope={provinceScope}
         subtitle={subtitle}
-        title="Severe malaria & case density"
+        title={language === 'en' ? 'Severe malaria & case density' : 'Malariya ikomeye n\'ubwinshi bw\'ibibazo'}
       />
     </div>
   );

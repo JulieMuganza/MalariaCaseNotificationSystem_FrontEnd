@@ -7,6 +7,7 @@ import { LockIcon, SaveIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { dashboardPathForRole } from '../../auth/rolePaths';
 import { AuthWebLayout } from '../../components/auth/AuthWebLayout';
+import { LanguageToggle } from '../../components/shared/LanguageToggle';
 
 export function SetupPasswordPage() {
   const { t } = useTranslation();
@@ -41,7 +42,7 @@ export function SetupPasswordPage() {
   }
 
   const inputClass =
-    'w-full rounded-xl border border-[#E5E7EB] py-3 pl-10 pr-3 text-base text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#3B82F6] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/20 sm:text-[15px]';
+    'w-full rounded-xl border border-[#E5E7EB] py-3 pl-10 pr-3 text-base text-[#111827] placeholder:text-[#9CA3AF] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:text-[15px]';
 
   if (!ready || !user?.mustChangePassword) {
     return (
@@ -55,7 +56,7 @@ export function SetupPasswordPage() {
     <AuthWebLayout
       pageTitle={t('auth.setup.title')}
       pageSubtitle={t('auth.setup.subtitle')}
-      headerRight={<span className="inline-block w-8" aria-hidden />}
+      headerRight={<LanguageToggle variant="light" />}
     >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -87,7 +88,7 @@ export function SetupPasswordPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3B82F6] py-3.5 text-base font-semibold text-white transition hover:bg-[#2563EB] disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
           >
             <SaveIcon size={20} strokeWidth={2} />
             {submitting ? t('auth.setup.submit.saving') : t('auth.setup.submit.saveContinue')}
@@ -97,7 +98,7 @@ export function SetupPasswordPage() {
           <button
             type="button"
             onClick={() => void logout().then(() => navigate('/login'))}
-            className="font-semibold text-[#3B82F6] hover:underline"
+            className="font-semibold text-primary hover:underline"
           >
             {t('auth.setup.signOut')}
           </button>

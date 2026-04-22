@@ -32,7 +32,6 @@ import {
   pipelineActivityPerDayLast7Days,
 } from '../../components/dashboard/MiniSparkline';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../context/AuthContext';
 import { useCasesApi } from '../../context/CasesContext';
 import type { MalariaCase } from '../../types/domain';
 
@@ -168,8 +167,11 @@ function OverviewTooltip({
   payload,
   label,
 }: TooltipProps<number, string>) {
+  const { i18n } = useTranslation();
+  const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
   if (!active || !payload?.length) return null;
   const sum = payload.reduce((s, p) => s + (Number(p.value) || 0), 0);
+  const en = language === 'en';
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-sm shadow-lg">
       <div className="flex items-center gap-2 font-semibold text-[#111827]">
@@ -178,7 +180,7 @@ function OverviewTooltip({
           style={{ backgroundColor: BR }}
         />
         <span>
-          {label}: {sum.toLocaleString()} {sum === 1 ? 'case' : 'cases'}
+          {label}: {sum.toLocaleString()} {en ? (sum === 1 ? 'case' : 'cases') : 'dosiye'}
         </span>
       </div>
     </div>
@@ -192,7 +194,20 @@ export function CHWHome() {
   const { i18n } = useTranslation();
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
   const en = language === 'en';
-  const { user, notifications, refreshNotifications } = useAuth();
+  const statusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      Pending: en ? 'Pending' : 'Bitegereje',
+      Referred: en ? 'Referred' : 'Byoherejwe',
+      'HC Received': en ? 'HC received' : 'Byakiriwe ku kigonderabuzima',
+      Escalated: en ? 'Escalated' : 'Byazamuwe',
+      Admitted: en ? 'Admitted' : 'Byakiriwe mu bitaro',
+      Treated: en ? 'Treated' : 'Yazamuwe',
+      Discharged: en ? 'Discharged' : 'Yasezerewe',
+      Resolved: en ? 'Resolved' : 'Byakemutse',
+      Deceased: en ? 'Deceased' : 'Yitabye Imana',
+    };
+    return map[status] ?? status;
+  };
   const { cases, stats, loading, error, refresh } = useCasesApi();
   const [rangeMonths, setRangeMonths] = useState<1 | 3 | 6 | 12>(12);
 
@@ -218,20 +233,6 @@ export function CHWHome() {
     'Discharged',
     'Deceased',
   ]);
-
-  const chwNotifications = useMemo(
-    () =>
-      [...notifications]
-        .filter(
-          (n) => n.targetRole === 'CHW' || n.targetRole === user?.role
-        )
-        .sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        )
-        .slice(0, 6),
-    [notifications, user?.role]
-  );
 
   const weekAgo = Date.now() - 7 * MS_DAY;
   const twoWeekAgo = Date.now() - 14 * MS_DAY;
@@ -396,14 +397,14 @@ export function CHWHome() {
           trend={pctTrend(newThisWeek, newPrevWeek)}
         />
         <StatCard
-          label={en ? 'In Referral' : 'Mu Buhuguzi'}
+          label={en ? 'In referral' : 'Mu nzira yo koherezwa'}
           value={referredCases}
           sparkline={sparkPipeline}
           sinceLabel={sinceLabel}
           trend={pctTrend(refThisWeek, refPrevWeek)}
         />
         <StatCard
-          label={en ? 'Resolved' : 'Byakizwa'}
+          label={en ? 'Resolved' : 'Byakemutse'}
           value={resolvedCases}
           sparkline={sparkCritical}
           sinceLabel={sinceLabel}
@@ -607,7 +608,9 @@ export function CHWHome() {
                   key={st}
                   className="rounded-xl border border-gray-50 bg-gray-50/50 p-3 transition-hover hover:border-teal-100 hover:bg-white"
                 >
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{st}</p>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                    {statusLabel(st)}
+                  </p>
                   <p className="text-xl font-black tabular-nums text-gray-900">
                     {n.toLocaleString()}
                   </p>
@@ -624,7 +627,7 @@ export function CHWHome() {
                    <CheckCircle2Icon size={16} />
                 </div>
                 <h2 className="truncate text-sm font-semibold tracking-tight text-gray-900">
-                  {en ? 'Recent logs' : 'Ibihuha'}
+                  {en ? 'Recent logs' : 'Ibyabaye vuba'}
                 </h2>
              </div>
              <button
@@ -666,7 +669,7 @@ export function CHWHome() {
                           #{c.id.slice(-4).toUpperCase()}
                         </span>
                         <span className="h-1 w-1 shrink-0 rounded-full bg-gray-300" />
-                        <span className="truncate text-gray-600">{c.status}</span>
+                        <span className="truncate text-gray-600">{statusLabel(c.status)}</span>
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
@@ -674,7 +677,7 @@ export function CHWHome() {
                         {visitTimeOnly(c.updatedAt)}
                       </p>
                       <p className="text-[11px] font-normal text-gray-400">
-                        {isToday(c.updatedAt) ? (en ? 'Today' : 'Uyu munsi') : 'Past'}
+                        {isToday(c.updatedAt) ? (en ? 'Today' : 'Uyu munsi') : (en ? 'Past' : 'Byabaye kera')}
                       </p>
                     </div>
                   </button>

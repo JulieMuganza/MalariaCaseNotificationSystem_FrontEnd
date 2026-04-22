@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -34,11 +34,13 @@ export function CHWLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const currentSidebarW = isSidebarCollapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_W;
   const navigate = useNavigate();
   const location = useLocation();
   const { unreadCount, messageUnreadCount, user } = useAuth();
   const { t, i18n } = useTranslation();
+  const en = !i18n.language.startsWith('rw');
 
   const desktopNav: {
     to: string;
@@ -98,6 +100,28 @@ export function CHWLayout() {
             location.pathname === n.to ||
             (n.to !== '/chw' && location.pathname.startsWith(n.to))
         )?.label ?? t('chw.layout.nav.dashboard');
+
+  useEffect(() => {
+    if (!isProfileOpen) return;
+
+    function onDocumentMouseDown(e: MouseEvent) {
+      if (!profileMenuRef.current) return;
+      if (!profileMenuRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+
+    function onDocumentKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setIsProfileOpen(false);
+    }
+
+    document.addEventListener('mousedown', onDocumentMouseDown);
+    document.addEventListener('keydown', onDocumentKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocumentMouseDown);
+      document.removeEventListener('keydown', onDocumentKeyDown);
+    };
+  }, [isProfileOpen]);
 
   return (
     <div data-app-role="chw" className={shell.page}>
@@ -162,7 +186,7 @@ export function CHWLayout() {
           <button
             type="button"
             className="absolute inset-0 bg-black/50"
-            aria-label="Close menu"
+            aria-label={en ? 'Close menu' : 'Funga menu'}
             onClick={() => setMobileMenuOpen(false)}
           />
           <div className="absolute inset-y-0 left-0 flex w-[min(100%,280px)] flex-col bg-[var(--app-surface)] shadow-xl">
@@ -174,7 +198,7 @@ export function CHWLayout() {
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
                 className="rounded-lg p-2 text-[var(--app-text-muted)] hover:bg-slate-100"
-                aria-label="Close"
+                aria-label={en ? 'Close' : 'Funga'}
               >
                 <XIcon size={22} />
               </button>
@@ -253,7 +277,7 @@ export function CHWLayout() {
                 type="button"
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--app-border)] bg-white text-[var(--app-text)] shadow-sm"
                 onClick={() => setMobileMenuOpen(true)}
-                aria-label="Open menu"
+                aria-label={en ? 'Open menu' : 'Fungura menu'}
               >
                 <MenuIcon size={20} />
               </button>
@@ -279,7 +303,7 @@ export function CHWLayout() {
 
               <div className="h-6 w-px bg-[var(--app-border)]" />
 
-              <div className="relative">
+              <div ref={profileMenuRef} className="relative">
                 <div
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex cursor-pointer select-none items-center gap-2.5 rounded-full border border-[var(--app-border)] bg-slate-50 py-1.5 pr-3 pl-1.5 shadow-sm transition hover:bg-slate-100 active:scale-95"

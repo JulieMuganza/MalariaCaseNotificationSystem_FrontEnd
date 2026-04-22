@@ -9,6 +9,7 @@ export function CHWPatients() {
   const { i18n } = useTranslation();
 
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
+  const en = language === 'en';
   const { cases } = useCasesApi();
   const [search, setSearch] = useState('');
 
@@ -70,7 +71,10 @@ export function CHWPatients() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.length === 0 ? (
           <div className="md:col-span-2 xl:col-span-3">
-            <EmptyState title="No patients found" description="Try a different search term" />
+            <EmptyState
+              title={en ? 'No patients found' : 'Nta barwayi babonetse'}
+              description={en ? 'Try a different search term' : 'Gerageza andi magambo yo gushakisha'}
+            />
           </div>
         ) : (
           filtered.map((p, i) => (
@@ -93,26 +97,38 @@ export function CHWPatients() {
 
               <div className="mt-6 grid grid-cols-2 gap-y-4 gap-x-2">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Location</p>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+                    {en ? 'Location' : 'Aho aherereye'}
+                  </p>
                   <p className="text-xs text-gray-700 font-medium truncate">{p.district}, {p.sector}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Total Cases</p>
-                  <p className="text-xs text-gray-700 font-medium">{p.caseCount} reports</p>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+                    {en ? 'Total cases' : 'Umubare w\'ibibazo'}
+                  </p>
+                  <p className="text-xs text-gray-700 font-medium">
+                    {p.caseCount} {en ? 'reports' : 'raporo'}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Sex</p>
-                  <p className="text-xs text-gray-700 font-medium">{p.sex}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+                    {en ? 'Sex' : 'Igitsina'}
+                  </p>
+                  <p className="text-xs text-gray-700 font-medium">
+                    {p.sex === 'Female' ? (en ? 'Female' : 'Gore') : p.sex === 'Male' ? (en ? 'Male' : 'Gabo') : p.sex}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Last Activity</p>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+                    {en ? 'Last activity' : 'Iheruka'}
+                  </p>
                   <p className="text-xs text-gray-700 font-medium">{new Date(p.lastSeen).toLocaleDateString()}</p>
                 </div>
               </div>
               
               <div className="mt-5 pt-4 border-t border-gray-50 flex justify-end">
                 <button className="text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1">
-                  View Medical History 
+                  {en ? 'View medical history' : 'Reba amateka y\'uburwayi'} 
                   <motion.span animate={{ x: [0, 2, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>→</motion.span>
                 </button>
               </div>

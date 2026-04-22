@@ -24,13 +24,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useCasesApi } from '../../context/CasesContext';
 import { apiFetch } from '../../lib/api';
 import { ConfirmModal } from '../../components/shared/ConfirmModal';
-const STEPS = [
-  'Location',
-  'Demographics',
-  'RDT & symptoms',
-  'Review',
-];
-
 /** Default for `transportMode` on create (general travel to care). */
 const ARRIVAL_TRANSPORT_DEFAULT = 'Walk';
 
@@ -96,33 +89,31 @@ function SelectField({
     </div>);
 
 }
+type OptionItem = string | { value: string; label: string };
 function RadioCards({
   label,
   value,
   onChange,
   options,
   required
-
-
-
-
-
-
-}: {label: string;value: string;onChange: (v: string) => void;options: string[];required?: boolean;}) {
+}: {label: string;value: string;onChange: (v: string) => void;options: OptionItem[];required?: boolean;}) {
   return (
     <div>
       <FieldLabel required={required}>{label}</FieldLabel>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-        {options.map((o) =>
+        {options.map((o) => {
+          const item = typeof o === 'string' ? { value: o, label: o } : o;
+          return (
         <button
-          key={o}
+          key={item.value}
           type="button"
-          onClick={() => onChange(o)}
-          className={`px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${value === o ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'}`}>
+          onClick={() => onChange(item.value)}
+          className={`px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${value === item.value ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'}`}>
           
-            {o}
+            {item.label}
           </button>
-        )}
+          );
+        })}
       </div>
     </div>);
 
@@ -131,6 +122,7 @@ export function CHWNewCase() {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
+  const en = language === 'en';
   const { refreshNotifications } = useAuth();
   const { refresh } = useCasesApi();
   const [step, setStep] = useState(0);
@@ -209,6 +201,44 @@ export function CHWNewCase() {
     }
     return true;
   }
+  const stepLabels = en
+    ? ['Location', 'Demographics', 'RDT & symptoms', 'Review']
+    : ['Aho aherereye', 'Imibare y\'umurwayi', 'RDT n\'ibimenyetso', 'Isuzuma rya nyuma'];
+  const sexOptions = en
+    ? [
+        { value: 'Male', label: 'Male' },
+        { value: 'Female', label: 'Female' },
+      ]
+    : [
+        { value: 'Male', label: 'Gabo' },
+        { value: 'Female', label: 'Gore' },
+      ];
+  const yesNoOptions = en
+    ? [
+        { value: 'Yes', label: 'Yes' },
+        { value: 'No', label: 'No' },
+      ]
+    : [
+        { value: 'Yes', label: 'Yego' },
+        { value: 'No', label: 'Oya' },
+      ];
+  const rapidOptions = en
+    ? [
+        { value: 'Positive', label: 'Positive' },
+        { value: 'Negative', label: 'Negative' },
+      ]
+    : [
+        { value: 'Positive', label: 'Byagaragaye' },
+        { value: 'Negative', label: 'Nta byagaragaye' },
+      ];
+  const insuranceTypeOptions = en
+    ? ['CBHI', 'RAMA', 'MMI', 'Other']
+    : [
+        { value: 'CBHI', label: 'CBHI' },
+        { value: 'RAMA', label: 'RAMA' },
+        { value: 'MMI', label: 'MMI' },
+        { value: 'Other', label: 'Ibindi' },
+      ];
 
   function validateDemographicsStep(): boolean {
     if (!patientName.trim()) {
@@ -354,7 +384,13 @@ export function CHWNewCase() {
         navigate('/chw');
       }, 2500);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to submit case');
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : en
+            ? 'Failed to submit case'
+            : 'Kohereza dosiye byanze'
+      );
     } finally {
       setSending(false);
     }
@@ -369,26 +405,27 @@ export function CHWNewCase() {
             type="button" 
             onClick={() => navigate('/chw')}
             className="p-1.5 -ml-1.5 rounded-full text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-            title="Go back"
+            title={en ? 'Go back' : 'Subira inyuma'}
           >
             <ChevronLeftIcon size={24} />
           </button>
           <div className="flex-1 flex items-center justify-between">
             <h2 className="text-base font-bold text-gray-900 tracking-tight">
-              {language === 'en' ? 'New Case Report' : 'Raporo Nshya'}
+              {en ? 'New Case Report' : 'Raporo nshya y\'umurwayi'}
             </h2>
             {lastSaved && (
               <span className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 rounded-full text-[11px] font-semibold text-gray-500">
-                <SaveIcon size={12} /> Auto-saved
+                <SaveIcon size={12} /> {en ? 'Auto-saved' : 'Byabitswe byikora'}
               </span>
             )}
           </div>
         </div>
         <div className="pl-10">
           <p className="text-xs font-medium text-gray-500 mb-3">
-            Step {step + 1} of {STEPS.length}: <span className="text-teal-700 font-bold">{STEPS[step]}</span>
+            {en ? 'Step' : 'Intambwe'} {step + 1} {en ? 'of' : 'kuri'} {stepLabels.length}:{' '}
+            <span className="text-teal-700 font-bold">{stepLabels[step]}</span>
           </p>
-          <StepIndicator current={step} total={STEPS.length} />
+          <StepIndicator current={step} total={stepLabels.length} />
         </div>
       </div>
 
@@ -413,41 +450,44 @@ export function CHWNewCase() {
                     : 'Hitamo akarere n’aho umurwayi aherereye (intara zose). Ikigo cy’ibanze gisanga ikimenyetso kuri aka karere.'}
                 </p>
                 <SelectField
-                label="District"
+                label={en ? 'District' : 'Akarere'}
                 value={district}
                 onChange={(v) => {
                   setDistrict(v);
                   setSector('');
                 }}
                 options={districtOptions}
-                required />
+                required
+                placeholder={en ? 'Select district...' : 'Hitamo akarere...'} />
               
                 {district && sectors.length === 0 ?
               <div>
-                  <FieldLabel required>Sector</FieldLabel>
+                  <FieldLabel required>{en ? 'Sector' : 'Umurenge'}</FieldLabel>
                   <input
                   type="text"
                   value={sector}
                   onChange={(e) => setSector(e.target.value)}
                   required
-                  placeholder="Enter sector name"
+                  placeholder={en ? 'Enter sector name' : 'Andika umurenge'}
                   className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm bg-white hover:border-gray-300 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 outline-none transition-colors" />
                 
                 </div> :
  
               <SelectField
-                label="Sector"
+                label={en ? 'Sector' : 'Umurenge'}
                 value={sector}
                 onChange={setSector}
                 options={sectors}
                 required
                 placeholder={
-                district ? 'Select sector...' : 'Select district first'
+                district
+                  ? en ? 'Select sector...' : 'Hitamo umurenge...'
+                  : en ? 'Select district first' : 'Banza uhitemo akarere'
                 } />
               }
               
                 <div>
-                  <FieldLabel required>Cell</FieldLabel>
+                  <FieldLabel required>{en ? 'Cell' : 'Akagari'}</FieldLabel>
                   <input
                   type="text"
                   value={cell}
@@ -457,7 +497,7 @@ export function CHWNewCase() {
                 
                 </div>
                 <div>
-                  <FieldLabel required>Village</FieldLabel>
+                  <FieldLabel required>{en ? 'Village' : 'Umudugudu'}</FieldLabel>
                   <input
                   type="text"
                   value={village}
@@ -467,24 +507,24 @@ export function CHWNewCase() {
                 
                 </div>
                 <div className="md:col-span-2">
-                  <FieldLabel>GPS Coordinates</FieldLabel>
+                  <FieldLabel>{en ? 'GPS coordinates' : 'Imibare ya GPS'}</FieldLabel>
                   <div className="flex gap-2">
                     <input
                     type="text"
                     value={gps}
                     readOnly
-                    placeholder="Tap to capture"
+                    placeholder={en ? 'Tap to capture' : 'Kanda ufate GPS'}
                     className="flex-1 rounded-xl border border-gray-200 px-3 py-3 text-sm bg-gray-50" />
                   
                     <button
                     type="button"
                     onClick={() => {
                       setGps('-2.3456, 29.7654');
-                      toast.success('GPS captured');
+                      toast.success(en ? 'GPS captured' : 'GPS yafashwe');
                     }}
                     className="px-4 py-3 bg-teal-700 text-white rounded-xl text-sm font-medium flex items-center gap-1.5 hover:bg-teal-800 transition-colors">
                     
-                      <MapPinIcon size={16} /> Capture
+                      <MapPinIcon size={16} /> {en ? 'Capture' : 'Fata'}
                     </button>
                   </div>
                 </div>
@@ -495,26 +535,26 @@ export function CHWNewCase() {
             {step === 1 &&
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 <div>
-                  <FieldLabel required>Patient name</FieldLabel>
+                  <FieldLabel required>{en ? 'Patient name' : 'Izina ry\'umurwayi'}</FieldLabel>
                   <input
                     type="text"
                     value={patientName}
                     onChange={(e) => setPatientName(e.target.value)}
-                    placeholder="Full name"
+                    placeholder={en ? 'Full name' : 'Amazina yose'}
                     className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm bg-white hover:border-gray-300 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 outline-none transition-colors"
                   />
                 </div>
                 <div className="md:col-span-1">
                   <RadioCards
-                  label="Sex"
+                  label={en ? 'Sex' : 'Igitsina'}
                   value={sex}
                   onChange={setSex}
-                  options={['Male', 'Female']}
+                  options={sexOptions}
                   required />
                 </div>
               
                 <div>
-                  <FieldLabel required>Date of Birth</FieldLabel>
+                  <FieldLabel required>{en ? 'Date of birth' : 'Itariki y\'amavuko'}</FieldLabel>
                   <input
                   type="date"
                   value={dob}
@@ -523,19 +563,19 @@ export function CHWNewCase() {
                 
                   {age !== null &&
                 <p className="text-xs text-teal-700 mt-1 font-medium">
-                      Age: {age} years ({age < 5 ? 'Under 5' : '5 and above'})
+                      {en ? 'Age' : 'Imyaka'}: {age} {en ? 'years' : 'imyaka'} ({age < 5 ? (en ? 'Under 5' : 'Munsi ya 5') : (en ? '5 and above' : '5 kuzamura')})
                     </p>
                 }
                 </div>
                 <div className="md:col-span-2">
                   <RadioCards
-                    label="Health insurance"
+                    label={en ? 'Health insurance' : 'Ubwishingizi bwo kwivuza'}
                     value={insuranceYesNo}
                     onChange={(v) => {
                       setInsuranceYesNo(v as 'Yes' | 'No');
                       if (v === 'No') setInsuranceType('');
                     }}
-                    options={['Yes', 'No']}
+                    options={yesNoOptions}
                     required
                   />
                 </div>
@@ -543,10 +583,10 @@ export function CHWNewCase() {
                 {insuranceYesNo === 'Yes' && (
                   <div className="md:col-span-2">
                     <RadioCards
-                      label="Insurance type"
+                      label={en ? 'Insurance type' : 'Ubwoko bw\'ubwishingizi'}
                       value={insuranceType}
                       onChange={setInsuranceType}
-                      options={['CBHI', 'RAMA', 'MMI', 'Other']}
+                      options={insuranceTypeOptions}
                       required
                     />
                   </div>
@@ -568,7 +608,7 @@ export function CHWNewCase() {
                     onChange={(v) =>
                       setRapidTestResult(v as 'Positive' | 'Negative')
                     }
-                    options={['Positive', 'Negative']}
+                    options={rapidOptions}
                     required
                   />
                   <p className="text-xs text-gray-500">
@@ -621,8 +661,8 @@ export function CHWNewCase() {
                     </div>
                     {symptoms.length > 0 && (
                       <p className="text-xs font-semibold text-danger-600 bg-danger-50 px-3 py-2 rounded-lg">
-                        {symptoms.length} symptom
-                        {symptoms.length > 1 ? 's' : ''} selected
+                        {symptoms.length} {en ? 'symptom' : 'ikimenyetso'}
+                        {symptoms.length > 1 ? (en ? 's' : '') : ''} {en ? 'selected' : 'byahiswemo'}
                       </p>
                     )}
                   </>
@@ -643,35 +683,35 @@ export function CHWNewCase() {
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
                   <div className="space-y-6">
                     <ReviewSection
-                      title="Location"
+                      title={en ? 'Location' : 'Aho aherereye'}
                       items={[
-                        ['District', district],
-                        ['Sector', sector],
-                        ['Cell', cell],
-                        ['Village', village],
+                        [en ? 'District' : 'Akarere', district],
+                        [en ? 'Sector' : 'Umurenge', sector],
+                        [en ? 'Cell' : 'Akagari', cell],
+                        [en ? 'Village' : 'Umudugudu', village],
                         ['GPS', gps],
-                        ['Date/Time Sent', new Date().toLocaleString(language === 'en' ? 'en-RW' : 'fr-RW')]
+                        [en ? 'Date/time sent' : 'Itariki/isaha byoherejwe', new Date().toLocaleString(en ? 'en-RW' : 'rw-RW')]
                       ]}
                     />
                   
                     <ReviewSection
-                      title="RDT & symptoms"
+                      title={en ? 'RDT & symptoms' : 'RDT n\'ibimenyetso'}
                       items={[
                         [
-                          'Rapid test',
+                          en ? 'Rapid test' : 'Ikizamini cyihuse',
                           rapidTestResult || '—',
                         ],
                         [
-                          'Severe symptoms',
+                          en ? 'Severe symptoms' : 'Ibimenyetso bikomeye',
                           rapidTestResult === 'Positive'
-                            ? `${symptoms.length} selected`
+                            ? `${symptoms.length} ${en ? 'selected' : 'byatoranyijwe'}`
                             : '—',
                         ],
                         [
-                          'Journey outcome',
+                          en ? 'Journey outcome' : 'Ibyavuye mu rugendo',
                           rapidTestResult === 'Positive' && symptoms.length > 0
-                            ? 'Referral starts (severe case alert)'
-                            : 'Closed at CHW (non-severe, no transfer)',
+                            ? (en ? 'Referral starts (severe case alert)' : 'Kohereza biratangira (ubutumwa bw\'ikibazo gikomeye)')
+                            : (en ? 'Closed at CHW (non-severe, no transfer)' : 'Byafunzwe kuri CHW (si ikibazo gikomeye)'),
                         ],
                         ...symptoms.map((s) => [
                           getSymptomLabel(s, language),
@@ -682,18 +722,18 @@ export function CHWNewCase() {
                   </div>
 
                   <ReviewSection
-                    title="Patient"
+                    title={en ? 'Patient' : 'Umurwayi'}
                     items={[
-                      ['Name', patientName],
-                      ['Sex', sex],
+                      [en ? 'Name' : 'Izina', patientName],
+                      [en ? 'Sex' : 'Igitsina', sex ? sexOptions.find((o) => o.value === sex)?.label || sex : ''],
                       ['DOB', dob],
-                      ['Age', age ? `${age} years` : ''],
+                      [en ? 'Age' : 'Imyaka', age ? `${age} ${en ? 'years' : 'imyaka'}` : ''],
                       [
-                        'Insurance',
+                        en ? 'Insurance' : 'Ubwishingizi',
                         insuranceYesNo === 'Yes'
-                          ? insuranceType || 'Yes'
+                          ? insuranceType || (en ? 'Yes' : 'Yego')
                           : insuranceYesNo === 'No'
-                            ? 'No'
+                            ? (en ? 'No' : 'Oya')
                             : '',
                       ],
                     ]}
@@ -710,10 +750,10 @@ export function CHWNewCase() {
         <button
           onClick={() => setStep((s) => s - 1)}
           className="flex items-center gap-1 px-6 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all">
-            <ChevronLeftIcon size={18} /> Back
+            <ChevronLeftIcon size={18} /> {en ? 'Back' : 'Subira inyuma'}
           </button>
         }
-        {step < STEPS.length - 1 ? (
+        {step < stepLabels.length - 1 ? (
           <button
             type="button"
             onClick={() => {
@@ -722,7 +762,7 @@ export function CHWNewCase() {
             }}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-teal-600 text-white text-sm font-bold hover:bg-teal-700 hover:shadow-md transition-all active:scale-[0.98]"
           >
-            Next <ChevronRightIcon size={18} />
+            {en ? 'Next' : 'Komeza'} <ChevronRightIcon size={18} />
           </button>
         ) : (
 
@@ -734,7 +774,7 @@ export function CHWNewCase() {
             }}
             className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-teal-600 text-white text-sm font-bold hover:bg-teal-700 shadow-md shadow-teal-600/30 transition-all active:scale-[0.98]"
           >
-            <SendIcon size={18} /> Submit Case Report
+            <SendIcon size={18} /> {en ? 'Submit case report' : 'Ohereza raporo y\'umurwayi'}
           </button>
         )}
       </div>

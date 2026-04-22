@@ -5,14 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { 
   MailIcon, LockIcon, LogInIcon, 
-  UserIcon, MapPinIcon, EyeIcon, EyeOffIcon
+  UserIcon, MapPinIcon, EyeIcon, EyeOffIcon, PhoneIcon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { dashboardPathForRole } from '../../auth/rolePaths';
 import { apiFetch } from '../../lib/api';
 import { backendAuthUrl } from '../../lib/config';
-import loginImage from '../../assets/img/Image1.jpg';
-import registerImage from '../../assets/img/Image 7.jpg';
+import { LanguageToggle } from '../../components/shared/LanguageToggle';
+
+const loginImage = new URL('../../assets/img/Image (6).jpg', import.meta.url).href;
+const registerImage = new URL('../../assets/img/Image (8).jpg', import.meta.url).href;
 
 // Reusable icon wrapper
 function FieldIconWrap({ children, icon: Icon }: { children: React.ReactNode; icon: any }) {
@@ -46,6 +48,7 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
   const [regPassword, setRegPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regName, setRegName] = useState('');
+  const [regPhone, setRegPhone] = useState('');
   const [regDistrict, setRegDistrict] = useState('');
   const [regSubmitting, setRegSubmitting] = useState(false);
 
@@ -106,6 +109,7 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
         email: regEmail.trim(),
         password: regPassword,
         name: regName.trim(),
+        phone: regPhone.trim(),
         district: regDistrict.trim(),
       });
       toast.success(t('auth.unified.toast.checkEmailCode'));
@@ -133,6 +137,9 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute top-[80%] -right-[10%] w-[60%] h-[60%] rounded-full bg-teal-400/10 blur-3xl" />
+      </div>
+      <div className="absolute right-4 top-4 z-30 sm:right-8 sm:top-8">
+        <LanguageToggle variant="light" />
       </div>
 
       <div className="relative z-10 w-full max-w-[1200px] h-[85vh] min-h-[600px] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-100">
@@ -263,6 +270,20 @@ export function UnifiedAuthPage({ initialMode = 'login' }: { initialMode?: 'logi
                   <button type="button" onClick={() => setShowRegPassword(!showRegPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors" tabIndex={-1}>
                     {showRegPassword ? <EyeOffIcon size={18} /> : <EyeIcon size={18} />}
                   </button>
+                </FieldIconWrap>
+              </div>
+              <div>
+                <FieldIconWrap icon={PhoneIcon}>
+                  <input
+                    type="tel"
+                    value={regPhone}
+                    onChange={(e) => setRegPhone(e.target.value)}
+                    required
+                    minLength={7}
+                    placeholder={t('auth.unified.register.placeholder.phone')}
+                    className={inputClass}
+                    autoComplete="tel"
+                  />
                 </FieldIconWrap>
               </div>
               <div>

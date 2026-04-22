@@ -172,6 +172,10 @@ export function HospitalReports() {
     const toReferral = list.filter(
       (c) => c.dhTransferredToReferralHospitalDateTime
     ).length;
+    const admittedFlow =
+      (byStatus.Admitted ?? 0) +
+      (byStatus.Discharged ?? 0) +
+      (byStatus.Deceased ?? 0);
     const male = list.filter((c) => c.sex === 'Male').length;
     const female = list.filter((c) => c.sex === 'Female').length;
     const deaths = list.filter((c) => c.status === 'Deceased').length;
@@ -189,6 +193,7 @@ export function HospitalReports() {
     return {
       byStatus,
       receivedToday,
+      admittedFlow,
       toReferral,
       male,
       female,
@@ -356,7 +361,7 @@ export function HospitalReports() {
               },
               {
                 label: en ? 'Admitted' : 'Bari mu bitaro',
-                value: aggregates.byStatus.Admitted ?? 0,
+                value: aggregates.admittedFlow ?? 0,
                 icon: BarChart3Icon,
               },
               {

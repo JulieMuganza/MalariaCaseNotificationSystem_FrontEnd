@@ -39,7 +39,7 @@ export function ResetPasswordPage() {
   }
 
   const inputClass =
-    'w-full rounded-xl border border-[#E5E7EB] py-3 pl-10 pr-3 text-base text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#3B82F6] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/20 sm:text-[15px]';
+    'w-full rounded-xl border border-[#E5E7EB] py-3 pl-10 pr-3 text-base text-[#111827] placeholder:text-[#9CA3AF] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:text-[15px]';
 
   return (
     <AuthWebLayout
@@ -109,7 +109,7 @@ export function ResetPasswordPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#3B82F6] py-3.5 text-base font-semibold text-white transition hover:bg-[#2563EB] disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-base font-semibold text-white transition hover:bg-primary/90 disabled:opacity-50"
           >
             <SaveIcon size={20} strokeWidth={2} />
             {submitting ? 'Saving…' : 'Update password'}
@@ -117,7 +117,7 @@ export function ResetPasswordPage() {
         </form>
 
         <p className="text-center text-sm text-[#6B7280]">
-          <Link to="/login" className="font-semibold text-[#3B82F6] hover:underline">
+          <Link to="/login" className="font-semibold text-primary hover:underline">
             {t('auth.reset.backToSignIn')}
           </Link>
         </p>

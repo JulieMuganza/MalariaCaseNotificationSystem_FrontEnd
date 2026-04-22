@@ -1,4 +1,4 @@
-import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CaseStatus } from '../../data/mockData';
 const statusConfig: Record<
   CaseStatus,
@@ -55,8 +55,22 @@ const statusConfig: Record<
   }
 };
 export function StatusBadge({ status }: {status: CaseStatus;}) {
+  const { i18n } = useTranslation();
+  const en = !i18n.language.startsWith('rw');
   const config = statusConfig[status] || statusConfig.Pending;
-  const label = status === 'Treated' ? 'Discharged' : status;
+  const normalized = status === 'Treated' ? 'Discharged' : status;
+  const labels: Record<string, string> = {
+    Pending: en ? 'Pending' : 'Bitegereje',
+    Referred: en ? 'Referred' : 'Byoherejwe',
+    'HC Received': en ? 'HC received' : 'Byakiriwe ku kigonderabuzima',
+    Escalated: en ? 'Escalated' : 'Byazamuwe',
+    Admitted: en ? 'Admitted' : 'Byakiriwe mu bitaro',
+    Treated: en ? 'Treated' : 'Yazamuwe',
+    Discharged: en ? 'Discharged' : 'Yasezerewe',
+    Resolved: en ? 'Resolved' : 'Byakemutse',
+    Deceased: en ? 'Deceased' : 'Yitabye Imana',
+  };
+  const label = labels[normalized] ?? normalized;
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>

@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { dashboardPathForRole } from '../../auth/rolePaths';
 import { apiFetch } from '../../lib/api';
 
-import otpImage from '../../assets/img/Image 11.jpg';
+import otpImage from '../../assets/img/Image (6).jpg';
 
 export function OTPPage() {
   const { t } = useTranslation();

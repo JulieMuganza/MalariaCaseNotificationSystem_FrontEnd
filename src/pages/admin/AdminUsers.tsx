@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { apiFetch } from '../../lib/api';
 import type { AuthUser, AuthUserRole } from '../../auth/types';
 import { DISTRICTS } from '../../data/mockData';
+import { useTranslation } from 'react-i18next';
 
 const ROLE_OPTIONS: AuthUserRole[] = [
   'CHW',
@@ -18,6 +19,8 @@ const ROLE_OPTIONS: AuthUserRole[] = [
 ];
 
 export function AdminUsers() {
+  const { i18n } = useTranslation();
+  const en = !i18n.language.startsWith('rw');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [showAdd, setShowAdd] = useState(false);
@@ -43,7 +46,7 @@ export function AdminUsers() {
       setUsers(res.data.users);
     } catch {
       setUsers([]);
-      toast.error('Could not load users');
+      toast.error(en ? 'Could not load users' : 'Ntibyashobotse gukuramo abakoresha');
     } finally {
       setLoading(false);
     }
@@ -76,11 +79,11 @@ export function AdminUsers() {
   async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault();
     if (password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error(en ? 'Password must be at least 8 characters' : 'Ijambo ry\'ibanga rigomba kugira nibura inyuguti 8');
       return;
     }
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error(en ? 'Passwords do not match' : 'Amagambo y\'ibanga ntahura');
       return;
     }
     setSubmitting(true);
@@ -100,14 +103,18 @@ export function AdminUsers() {
       });
       toast.success(
         mustChangePassword
-          ? 'User created. They receive an email with the temporary password and a secure link to set a new password. If email is not configured, check the API terminal output for the same content.'
-          : 'User created. They can sign in immediately with the password you entered (no invite email; first-login password change is off).'
+          ? en
+            ? 'User created. They receive an email with the temporary password and a secure link to set a new password.'
+            : 'Umukoresha yakozwe. Arahabwa imeli irimo ijambo ry\'ibanga ry\'agateganyo n\'umuhuza wo gushyiraho irishya.'
+          : en
+            ? 'User created. They can sign in immediately with the password you entered.'
+            : 'Umukoresha yakozwe. Ashobora kwinjira ako kanya akoresheje ijambo ry\'ibanga wanditse.'
       );
       resetForm();
       setShowAdd(false);
       await loadUsers();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Could not create user');
+      toast.error(err instanceof Error ? err.message : en ? 'Could not create user' : 'Ntibyashobotse gukora umukoresha');
     } finally {
       setSubmitting(false);
     }
@@ -117,9 +124,9 @@ export function AdminUsers() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">User Management</h1>
+          <h1 className="text-xl font-bold text-gray-900">{en ? 'User Management' : 'Imicungire y\'abakoresha'}</h1>
           <p className="text-sm text-gray-500">
-            {loading ? 'Loading…' : `${users.length} registered users`}
+            {loading ? (en ? 'Loading…' : 'Birakorwa...') : `${users.length} ${en ? 'registered users' : 'abakoresha biyandikishije'}`}
           </p>
         </div>
         <button
@@ -130,7 +137,7 @@ export function AdminUsers() {
           }}
           className="flex items-center gap-2 px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-medium hover:bg-teal-800 transition-colors"
         >
-          <PlusIcon size={16} /> {showAdd ? 'Close' : 'Add User'}
+          <PlusIcon size={16} /> {showAdd ? (en ? 'Close' : 'Funga') : (en ? 'Add User' : 'Ongeramo umukoresha')}
         </button>
       </div>
 
@@ -140,13 +147,14 @@ export function AdminUsers() {
           className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4"
         >
           <p className="text-sm text-slate-600 leading-relaxed rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
-            Enter and confirm a <strong>temporary password</strong>. With standard
-            security on, that password is emailed to the user together with a link to
-            choose a new password; after first login they may also be asked to set a
-            new password before using the app.
+            {en ? (
+              <>Enter and confirm a <strong>temporary password</strong>. With standard security on, that password is emailed to the user together with a link to choose a new password.</>
+            ) : (
+              <>Shyiramo kandi wemeze <strong>ijambo ry\'ibanga ry\'agateganyo</strong>. Iyo umutekano usanzwe ukora, iri jambo ry\'ibanga ryoherezwa kuri imeli y\'umukoresha hamwe n\'umuhuza wo gushyiraho irishya.</>
+            )}
           </p>
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-bold text-slate-900">Create user</h2>
+            <h2 className="text-sm font-bold text-slate-900">{en ? 'Create user' : 'Kora umukoresha'}</h2>
             <button
               type="button"
               onClick={() => {
@@ -154,7 +162,7 @@ export function AdminUsers() {
                 resetForm();
               }}
               className="p-1 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              aria-label="Close form"
+              aria-label={en ? 'Close form' : 'Funga ifishi'}
             >
               <XIcon size={18} />
             </button>
@@ -163,19 +171,19 @@ export function AdminUsers() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">
-                Full name
+                {en ? 'Full name' : 'Amazina yose'}
               </label>
               <input
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                placeholder="e.g. Jane Mukamana"
+                placeholder={en ? 'e.g. Jane Mukamana' : 'urugero: Jane Mukamana'}
               />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">
-                Email
+                {en ? 'Email' : 'Imeli'}
               </label>
               <input
                 required
@@ -183,13 +191,13 @@ export function AdminUsers() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                placeholder="user@example.com"
+                placeholder={en ? 'user@example.com' : 'umukoresha@example.com'}
                 autoComplete="off"
               />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">
-                Temporary password (min 8 characters)
+                {en ? 'Temporary password (min 8 characters)' : 'Ijambo ry\'ibanga ry\'agateganyo (nibura inyuguti 8)'}
               </label>
               <input
                 required
@@ -202,7 +210,7 @@ export function AdminUsers() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">
-                Confirm temporary password
+                {en ? 'Confirm temporary password' : 'Emeza ijambo ry\'ibanga ry\'agateganyo'}
               </label>
               <input
                 required
@@ -215,7 +223,7 @@ export function AdminUsers() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">
-                Role
+                {en ? 'Role' : 'Uruhare'}
               </label>
               <select
                 value={newRole}
@@ -233,7 +241,7 @@ export function AdminUsers() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">
-                District
+                {en ? 'District' : 'Akarere'}
               </label>
               <select
                 value={district}
@@ -249,13 +257,13 @@ export function AdminUsers() {
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-gray-600 mb-1">
-                Staff code (optional)
+                {en ? 'Staff code (optional)' : 'Kode y\'akazi (si ngombwa)'}
               </label>
               <input
                 value={staffCode}
                 onChange={(e) => setStaffCode(e.target.value)}
                 className="w-full max-w-md rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                placeholder="e.g. DH-301"
+                placeholder={en ? 'e.g. DH-301' : 'urugero: DH-301'}
               />
             </div>
             <div className="sm:col-span-2 flex items-start gap-2 rounded-lg border border-slate-100 bg-slate-50/80 px-3 py-2.5">
@@ -267,11 +275,10 @@ export function AdminUsers() {
                 className="mt-1 rounded border-gray-300"
               />
               <label htmlFor="mustChange" className="text-sm text-slate-700 leading-snug">
-                <span className="font-medium text-slate-900">Standard invitation</span>{' '}
-                (recommended): send the email with temporary password + reset link, and
-                require a new password on first sign-in. Turn off only for local demo
-                accounts when SMTP is unavailable and you need immediate login without
-                email.
+                <span className="font-medium text-slate-900">{en ? 'Standard invitation' : 'Ubutumire busanzwe'}</span>{' '}
+                {en
+                  ? '(recommended): send the email with temporary password + reset link, and require a new password on first sign-in.'
+                  : '(birasabwa): ohereza imeli irimo ijambo ry\'ibanga ry\'agateganyo n\'umuhuza wo kurihindura.'}
               </label>
             </div>
           </div>
@@ -285,14 +292,14 @@ export function AdminUsers() {
               }}
               className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Cancel
+              {en ? 'Cancel' : 'Hagarika'}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="px-5 py-2 rounded-lg bg-teal-700 text-white text-sm font-semibold hover:bg-teal-800 disabled:opacity-60"
             >
-              {submitting ? 'Creating…' : 'Create user'}
+              {submitting ? (en ? 'Creating…' : 'Birimo gukorwa...') : (en ? 'Create user' : 'Kora umukoresha')}
             </button>
           </div>
         </form>
@@ -309,7 +316,7 @@ export function AdminUsers() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search users..."
+            placeholder={en ? 'Search users...' : 'Shakisha abakoresha...'}
             className="w-full pl-8 pr-3 py-2 rounded-lg border border-gray-200 text-sm"
           />
         </div>
@@ -318,7 +325,7 @@ export function AdminUsers() {
           onChange={(e) => setRoleFilter(e.target.value)}
           className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
         >
-          <option value="">All Roles</option>
+          <option value="">{en ? 'All Roles' : 'Inshingano zose'}</option>
           {[
             'CHW',
             'Health Center',
@@ -340,13 +347,13 @@ export function AdminUsers() {
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               {[
-                'Name',
-                'Email',
-                'Role',
-                'District',
-                'Status',
-                'Last Active',
-                'Actions',
+                en ? 'Name' : 'Izina',
+                en ? 'Email' : 'Imeli',
+                en ? 'Role' : 'Uruhare',
+                en ? 'District' : 'Akarere',
+                en ? 'Status' : 'Imimerere',
+                en ? 'Last Active' : 'Aheruka gukora',
+                en ? 'Actions' : 'Ibikorwa',
               ].map((h) => (
                 <th
                   key={h}
@@ -413,14 +420,14 @@ export function AdminUsers() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => toast.info('Edit user modal')}
+                      onClick={() => toast.info(en ? 'Edit user modal' : 'Hindura umukoresha')}
                       className="p-1.5 hover:bg-gray-100 rounded text-gray-500"
                     >
                       <EditIcon size={14} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => toast.info('User deactivated')}
+                      onClick={() => toast.info(en ? 'User deactivated' : 'Umukoresha yahagaritswe')}
                       className="p-1.5 hover:bg-danger-50 rounded text-gray-500 hover:text-danger-600"
                     >
                       <UserXIcon size={14} />

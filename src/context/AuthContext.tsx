@@ -16,6 +16,7 @@ type RegisterInput = {
   email: string;
   password: string;
   name: string;
+  phone: string;
   district: string;
   staffCode?: string;
 };
@@ -35,7 +36,7 @@ type AuthContextValue = {
   /** After admin invite: set a new password while signed in. */
   completePasswordSetup: (newPassword: string) => Promise<AuthUser>;
   /** Update display name; CHW may also update district (e.g. after transfer). */
-  updateProfile: (body: { name?: string; district?: string }) => Promise<AuthUser>;
+  updateProfile: (body: { name?: string; district?: string; phone?: string }) => Promise<AuthUser>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<AuthUser | null>;
   refreshNotifications: () => Promise<void>;
@@ -184,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setRole, refreshMessageUnread]);
 
   const updateProfile = useCallback(
-    async (body: { name?: string; district?: string }) => {
+    async (body: { name?: string; district?: string; phone?: string }) => {
       const res = await apiFetch<{ data: { user: AuthUser } }>('/api/v1/auth/me', {
         method: 'PATCH',
         body: JSON.stringify(body),

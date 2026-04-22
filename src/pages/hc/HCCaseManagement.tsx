@@ -35,10 +35,10 @@ const sectionTitleClass = 'text-sm font-semibold text-gray-900';
 
 type HcTransport = NonNullable<MalariaCase['hcReferralToHospitalTransport']>;
 
-const TRANSPORT_OPTIONS: { value: HcTransport; en: string }[] = [
-  { value: 'Self', en: 'Self' },
-  { value: 'With relative', en: 'With family member' },
-  { value: 'Ambulance', en: 'Ambulance' },
+const TRANSPORT_OPTIONS: { value: HcTransport; en: string; rw: string }[] = [
+  { value: 'Self', en: 'Self', rw: 'Yenyine' },
+  { value: 'With relative', en: 'With family member', rw: 'Ari kumwe n\'umuryango' },
+  { value: 'Ambulance', en: 'Ambulance', rw: 'Imbangukiragutabara' },
 ];
 
 /** How the patient arrived at the health center (same options as former CHW field). */
@@ -245,7 +245,7 @@ export function HCCaseManagement() {
       return true;
     } catch (e) {
       toast.error(
-        en ? `Save failed: ${errorMessage(e)}` : `Byanze: ${errorMessage(e)}`
+        en ? `Save failed: ${errorMessage(e)}` : `Kubika byanze: ${errorMessage(e)}`
       );
       return false;
     } finally {
@@ -316,7 +316,7 @@ export function HCCaseManagement() {
              <StatusBadge status={c.status} />
           </div>
           <p className="mt-2 text-sm font-medium tracking-tight text-gray-500">
-            ID: <span className="font-mono text-gray-400">#{c.id.slice(-8).toUpperCase()}</span> • {c.age} Years • {c.sex} • {c.village}, {c.district}
+            ID: <span className="font-mono text-gray-400">#{c.id.slice(-8).toUpperCase()}</span> • {c.age} {en ? 'Years' : 'Imyaka'} • {c.sex === 'Female' ? (en ? 'Female' : 'Gore') : c.sex === 'Male' ? (en ? 'Male' : 'Gabo') : c.sex} • {c.village}, {c.district}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -411,7 +411,7 @@ export function HCCaseManagement() {
             <p className="mb-4 text-xs text-gray-500">
               {en
                 ? 'How did the patient reach the health center?'
-                : 'Umurwayi yageze ate ku kigo ndereshya?'}
+                : 'Umurwayi yageze ate ku kigonderabuzima?'}
             </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {PATIENT_ARRIVAL_OPTIONS.map((opt) => (
@@ -567,7 +567,7 @@ export function HCCaseManagement() {
                           onClick={() => {
                             const newEntry = { drug: selectedDrug, dose: `${suggestedDose.val}${suggestedDose.unit}`, route: selectedDrug === 'Artesunate' ? 'IV/IM' : 'IM', time: new Date().toISOString() };
                             setTreatmentLog(prev => [...prev, newEntry]);
-                            toast.success('Dose added');
+                            toast.success(en ? 'Dose added' : 'Dose yongeweho');
                           }}
                           className="w-full flex items-center justify-center gap-2 py-3 bg-white rounded-xl text-[color:var(--role-accent)] font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 active:scale-95 transition-all shadow-lg"
                         >
@@ -675,7 +675,7 @@ export function HCCaseManagement() {
                       checked={referralTransport === opt.value}
                       onChange={() => setReferralTransport(opt.value)}
                     />
-                    <span>{opt.en}</span>
+                    <span>{en ? opt.en : opt.rw}</span>
                   </label>
                 ))}
               </div>
@@ -712,9 +712,13 @@ export function HCCaseManagement() {
         open={showEscalate}
         onClose={() => setShowEscalate(false)}
         onConfirm={executeEscalationToDistrict}
-        title="Escalate to district hospital?"
-        message={`Sets transfer time, logs pre-treatment for continuity, and records transport as "${referralTransport}". District hospital and RICH are notified per protocol.`}
-        confirmText="Confirm referral"
+        title={en ? 'Escalate to district hospital?' : 'Kohereza ku bitaro by\'akarere?'}
+        message={
+          en
+            ? `Sets transfer time, logs pre-treatment for continuity, and records transport as "${referralTransport}". District hospital and RICH are notified per protocol.`
+            : `Ibi birashyiraho igihe cyo kohereza, bibike ubuvuzi bwabanje, kandi bibike uko umurwayi yageze nka "${referralTransport}". Ibitaro by'akarere na RICH biramenyeshwa.`
+        }
+        confirmText={en ? 'Confirm referral' : 'Emeza kohereza'}
         confirmColor="amber"
       />
 
@@ -722,9 +726,9 @@ export function HCCaseManagement() {
         open={showDischarge}
         onClose={() => setShowDischarge(false)}
         onConfirm={async () => { await saveClinicalData({ status: 'Resolved' }); navigate(base); }}
-        title="Discharge Patient?"
-        message="Confirm patient recovery and tolerance of treatment."
-        confirmText="Confirm Discharge"
+        title={en ? 'Discharge patient?' : 'Sezerera umurwayi?'}
+        message={en ? 'Confirm patient recovery and tolerance of treatment.' : 'Emeza ko umurwayi yakize kandi yihanganiye ubuvuzi.'}
+        confirmText={en ? 'Confirm discharge' : 'Emeza gusezerera'}
         confirmColor="success"
       />
     </div>

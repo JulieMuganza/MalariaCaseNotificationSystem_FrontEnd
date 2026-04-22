@@ -28,9 +28,21 @@ export function CHWCases() {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
+  const en = language === 'en';
   const { cases: myCases } = useCasesApi();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<ChwCaseFilter>('All');
+  const statusLabels: Record<ChwCaseFilter, string> = {
+    All: en ? 'All' : 'Byose',
+    'Non-severe (closed at CHW)': en
+      ? 'Non-severe (closed at CHW)'
+      : 'Si ikomeye (byafunzwe kuri CHW)',
+    Pending: en ? 'Pending' : 'Bitegereje',
+    Referred: en ? 'Referred' : 'Byoherejwe',
+    'HC Received': en ? 'HC received' : 'Byakiriwe ku kigonderabuzima',
+    Resolved: en ? 'Resolved' : 'Byakemutse',
+    Deceased: en ? 'Deceased' : 'Yitabye Imana',
+  };
   const filtered = myCases.
   filter((c) => {
     if (filter === 'All') return true;
@@ -90,7 +102,7 @@ export function CHWCases() {
           onClick={() => setFilter(s)}
           className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filter === s ? 'bg-teal-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
           
-            {s}
+            {statusLabels[s]}
           </button>
         )}
       </div>
@@ -99,8 +111,8 @@ export function CHWCases() {
       <div className="space-y-2">
         {filtered.length === 0 ?
         <EmptyState
-          title="No cases found"
-          description="Try adjusting your search or filter" /> :
+          title={en ? 'No cases found' : 'Nta bibazo byabonetse'}
+          description={en ? 'Try adjusting your search or filter' : 'Hindura uburyo bwo gushakisha cyangwa gushungura'} /> :
 
 
         filtered.map((c, i) =>
@@ -140,7 +152,9 @@ export function CHWCases() {
                 </p>
                 {isNonSevereClosedAtChw(c) && (
                   <p className="mt-1 text-[11px] font-medium text-emerald-700">
-                    Non-severe malaria: case closed at CHW, no transfer made.
+                    {en
+                      ? 'Non-severe malaria: case closed at CHW, no transfer made.'
+                      : 'Malariya idakomeye: dosiye yafunzwe kuri CHW, nta kohereza kwabaye.'}
                   </p>
                 )}
               </div>

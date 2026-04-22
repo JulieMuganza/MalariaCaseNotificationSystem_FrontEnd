@@ -17,6 +17,7 @@ export type AuthUser = {
   status: string;
   lastActive: string;
   email: string;
+  phone: string | null;
   emailVerified: boolean;
   mustChangePassword: boolean;
 };

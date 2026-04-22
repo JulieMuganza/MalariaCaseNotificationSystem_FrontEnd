@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -36,6 +36,7 @@ const SIDEBAR_COLLAPSED_W = 80;
 export function RichLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { user, messageUnreadCount } = useAuth();
@@ -57,6 +58,28 @@ export function RichLayout() {
       ] as const,
     [t, i18n.language, base, ns]
   );
+
+  useEffect(() => {
+    if (!isProfileOpen) return;
+
+    function onDocumentMouseDown(e: MouseEvent) {
+      if (!profileMenuRef.current) return;
+      if (!profileMenuRef.current.contains(e.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+
+    function onDocumentKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setIsProfileOpen(false);
+    }
+
+    document.addEventListener('mousedown', onDocumentMouseDown);
+    document.addEventListener('keydown', onDocumentKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocumentMouseDown);
+      document.removeEventListener('keydown', onDocumentKeyDown);
+    };
+  }, [isProfileOpen]);
 
   return (
     <div data-app-role={dataAppRole} className={shell.page}>
@@ -127,7 +150,7 @@ export function RichLayout() {
                 <NotificationBell variant="light" indicator="count" />
               </div>
               <div className="h-6 w-px bg-[var(--app-border)]" />
-              <div className="relative">
+              <div ref={profileMenuRef} className="relative">
                 <div
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex cursor-pointer select-none items-center gap-2.5 rounded-full border border-[var(--app-border)] bg-slate-50 py-1.5 pr-3 pl-1.5 shadow-sm transition hover:bg-slate-100 active:scale-95"

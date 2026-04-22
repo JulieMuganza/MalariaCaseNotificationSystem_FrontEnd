@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Stethoscope,
   Truck,
@@ -10,6 +9,7 @@ import {
   Bus,
   UserRound,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { MalariaCase } from '../../types/domain';
 
 type Step = {
@@ -30,10 +30,10 @@ function transportIcon(mode?: string) {
   return Footprints;
 }
 
-function formatTs(iso?: string) {
+function formatTs(iso?: string, locale?: string) {
   if (!iso) return undefined;
   try {
-    return new Date(iso).toLocaleString(undefined, {
+    return new Date(iso).toLocaleString(locale, {
       dateStyle: 'medium',
       timeStyle: 'short',
     });
@@ -85,6 +85,23 @@ export function PatientJourneyTimeline({
   /** `sky` on HC, `blue` on RICH, CHW default `emerald`. */
   accent?: JourneyAccent;
 }) {
+  const { i18n } = useTranslation();
+  const en = !i18n.language.startsWith('rw');
+  const locale = en ? undefined : 'rw-RW';
+  const statusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      Pending: en ? 'Pending' : 'Bitegereje',
+      Referred: en ? 'Referred' : 'Byoherejwe',
+      'HC Received': en ? 'HC received' : 'Byakiriwe ku kigonderabuzima',
+      Escalated: en ? 'Escalated' : 'Byazamuwe',
+      Admitted: en ? 'Admitted' : 'Byakiriwe mu bitaro',
+      Treated: en ? 'Treated' : 'Yazamuwe',
+      Discharged: en ? 'Discharged' : 'yasezerewe',
+      Deceased: en ? 'Deceased' : 'Yitabye Imana',
+      Resolved: en ? 'Resolved' : 'Byakemutse',
+    };
+    return labels[status] ?? status;
+  };
   const colors = ACCENT[accent];
   const firstLineOriginated = isFirstLineFacilityOriginatedCase(c);
   const walkInLocalClinic = firstLineOriginated && isLocalClinicFirstActor(c);
@@ -131,66 +148,76 @@ export function PatientJourneyTimeline({
 
   const intakeSymptomLabel =
     (c.symptomCount ?? 0) > 0
-      ? `${c.symptomCount} symptom${c.symptomCount === 1 ? '' : 's'} recorded at intake`
-      : 'Registered at facility';
+      ? en
+        ? `${c.symptomCount} symptom${c.symptomCount === 1 ? '' : 's'} recorded at intake`
+        : `${c.symptomCount} ibimenyetso byanditswe ku ikirangaminsi`
+      : en
+        ? 'Registered at facility'
+        : 'Yanditswe ku kigo';
 
   const steps: Step[] = firstLineOriginated
     ? [
         {
           id: 'hc_intake',
           title: walkInLocalClinic
-            ? 'Local clinic registration'
-            : 'Health center registration',
+            ? (en ? 'Local clinic registration' : 'Iyandikisha ku ivuriro ry\'ibanze')
+            : (en ? 'Health center registration' : 'Iyandikisha ku kigonderabuzima'),
           subtitle: intakeSymptomLabel,
           done: true,
           current: c.status === 'Pending',
         },
         {
           id: 'chw_path',
-          title: 'Community (CHW) referral',
+          title: en ? 'Community (CHW) referral' : 'Kohereza kwa CHW mu muryango',
           subtitle: walkInLocalClinic
-            ? 'Not applicable — patient presented directly at this local clinic'
-            : 'Not applicable — patient presented directly at this health center',
+            ? (en
+              ? 'Not applicable — patient presented directly at this local clinic'
+              : 'Ntibikurikizwa — umurwayi yaje kuri iri vuriro ry\'ibanze')
+            : (en
+              ? 'Not applicable — patient presented directly at this health center'
+              : 'Ntibikurikizwa — umurwayi yaje kuri iki kigonderabuzima'),
           done: true,
           current: false,
         },
         {
           id: 'hc',
-          title: walkInLocalClinic ? 'Care at local clinic' : 'Care at health center',
+          title: walkInLocalClinic
+            ? (en ? 'Care at local clinic' : 'Ubuvuzi ku ivuriro ry\'ibanze')
+            : (en ? 'Care at health center' : 'Ubuvuzi ku kigonderabuzima'),
           subtitle: nonSevereClosedAtChw
-            ? 'Not applicable'
-            : formatTs(c.hcPatientReceivedDateTime) || 'In progress',
+            ? (en ? 'Not applicable' : 'Ntibikurikizwa')
+            : formatTs(c.hcPatientReceivedDateTime, locale) || (en ? 'In progress' : 'Birakomeje'),
           done: hcInDone,
           current: c.status === 'HC Received',
         },
         {
           id: 'hosp_ref',
-          title: 'Referral to hospital',
+          title: en ? 'Referral to hospital' : 'Kohereza ku bitaro',
           subtitle: nonSevereClosedAtChw
-            ? 'Not applicable'
+            ? (en ? 'Not applicable' : 'Ntibikurikizwa')
             : c.hcPatientTransferredToHospitalDateTime
-              ? `${formatTs(c.hcPatientTransferredToHospitalDateTime)} · ${c.hcReferralToHospitalTransport || 'Transport'}`
-              : 'Not referred yet',
+              ? `${formatTs(c.hcPatientTransferredToHospitalDateTime, locale)} · ${c.hcReferralToHospitalTransport || (en ? 'Transport' : 'Uko yageze')}`
+              : (en ? 'Not referred yet' : 'Ntiyoherejwe'),
           done: !!c.hcPatientTransferredToHospitalDateTime || hospInDone,
           current: c.status === 'Escalated',
         },
         {
           id: 'hosp',
-          title: 'Hospital care',
+          title: en ? 'Hospital care' : 'Ubuvuzi ku bitaro',
           subtitle: nonSevereClosedAtChw
-            ? 'Not applicable'
-            : formatTs(c.hospitalReceivedDateTime) || 'Not admitted',
+            ? (en ? 'Not applicable' : 'Ntibikurikizwa')
+            : formatTs(c.hospitalReceivedDateTime, locale) || (en ? 'Not admitted' : 'Ntiyakiriwe mu bitaro'),
           done: hospInDone,
           current: ['Admitted', 'Treated'].includes(c.status),
         },
         {
           id: 'out',
-          title: 'Outcome',
+          title: en ? 'Outcome' : 'Ibyavuye mu buvuzi',
           subtitle:
             c.finalOutcomeHospital ||
             c.outcome ||
-            (c.status === 'Deceased' ? 'Deceased' : '') ||
-            (outcomeDone && c.status !== 'Pending' ? c.status : 'Pending'),
+            (c.status === 'Deceased' ? (en ? 'Deceased' : 'Yitabye Imana') : '') ||
+            (outcomeDone && c.status !== 'Pending' ? statusLabel(c.status) : statusLabel('Pending')),
           done: outcomeDone,
           current: outcomeDone,
         },
@@ -198,12 +225,16 @@ export function PatientJourneyTimeline({
     : [
         {
           id: 'chw',
-          title: 'CHW assessment',
+          title: en ? 'CHW assessment' : 'Isuzuma rya CHW',
           subtitle: nonSevereClosedAtChw
-            ? 'No severe malaria signs; case closed at CHW'
+            ? (en
+              ? 'No severe malaria signs; case closed at CHW'
+              : 'Nta bimenyetso bya malariya ikomeye; dosiye yafunzwe kuri CHW')
             : c.symptomCount
-              ? `${c.symptomCount} severe symptoms recorded`
-              : 'Symptoms recorded',
+              ? en
+                ? `${c.symptomCount} severe symptoms recorded`
+                : `${c.symptomCount} ibimenyetso bikomeye byanditswe`
+              : (en ? 'Symptoms recorded' : 'Ibimenyetso byanditswe'),
           done: chwDone,
           current: c.status === 'Pending' || nonSevereClosedAtChw,
         },
@@ -211,57 +242,61 @@ export function PatientJourneyTimeline({
           id: 'refer',
           title:
             c.chwPrimaryReferral === 'LOCAL_CLINIC'
-              ? 'Referral to local clinic'
-              : 'Referral to Health Center',
+              ? (en ? 'Referral to local clinic' : 'Kohereza ku ivuriro ry\'ibanze')
+              : (en ? 'Referral to Health Center' : 'Kohereza ku kigonderabuzima'),
           subtitle: nonSevereClosedAtChw
-            ? 'No transfer required'
+            ? (en ? 'No transfer required' : 'Nta kohereza bisabwa')
             : c.chwReferralTransport
-              ? `Transport: ${c.chwReferralTransport}`
-              : 'Transport pending',
+              ? `${en ? 'Transport' : 'Uko yageze'}: ${c.chwReferralTransport}`
+              : (en ? 'Transport pending' : 'Uko yageze ntiburamenyekana'),
           done: referredDone,
           current: c.status === 'Referred',
         },
         {
           id: 'hc',
           title:
-            c.chwPrimaryReferral === 'LOCAL_CLINIC' ? 'Local clinic' : 'Health Center',
+            c.chwPrimaryReferral === 'LOCAL_CLINIC'
+              ? (en ? 'Local clinic' : 'Ivuriro ry\'ibanze')
+              : (en ? 'Health Center' : 'Ikigonderabuzima'),
           subtitle: nonSevereClosedAtChw
-            ? 'Not applicable'
-            : formatTs(c.hcPatientReceivedDateTime) || 'Awaiting reception',
+            ? (en ? 'Not applicable' : 'Ntibikurikizwa')
+            : formatTs(c.hcPatientReceivedDateTime, locale) || (en ? 'Awaiting reception' : 'Ategereje kwakirwa'),
           done: hcInDone,
           current: c.status === 'HC Received',
         },
         {
           id: 'hosp_ref',
-          title: 'Referral to hospital',
+          title: en ? 'Referral to hospital' : 'Kohereza ku bitaro',
           subtitle: nonSevereClosedAtChw
-            ? 'Not applicable'
+            ? (en ? 'Not applicable' : 'Ntibikurikizwa')
             : c.hcPatientTransferredToHospitalDateTime
-              ? `${formatTs(c.hcPatientTransferredToHospitalDateTime)} · ${c.hcReferralToHospitalTransport || 'Transport'}`
-              : 'Not referred yet',
+              ? `${formatTs(c.hcPatientTransferredToHospitalDateTime, locale)} · ${c.hcReferralToHospitalTransport || (en ? 'Transport' : 'Uko yageze')}`
+              : (en ? 'Not referred yet' : 'Ntiyoherejwe'),
           done: !!c.hcPatientTransferredToHospitalDateTime || hospInDone,
           current: c.status === 'Escalated',
         },
         {
           id: 'hosp',
-          title: 'Hospital care',
+          title: en ? 'Hospital care' : 'Ubuvuzi ku bitaro',
           subtitle: nonSevereClosedAtChw
-            ? 'Not applicable'
-            : formatTs(c.hospitalReceivedDateTime) || 'Not admitted',
+            ? (en ? 'Not applicable' : 'Ntibikurikizwa')
+            : formatTs(c.hospitalReceivedDateTime, locale) || (en ? 'Not admitted' : 'Ntiyakiriwe mu bitaro'),
           done: hospInDone,
           current: ['Admitted', 'Treated'].includes(c.status),
         },
         {
           id: 'out',
-          title: 'Outcome',
+          title: en ? 'Outcome' : 'Ibyavuye mu buvuzi',
           subtitle:
             (nonSevereClosedAtChw
-              ? 'Resolved at CHW (non-severe malaria, no referral)'
+              ? (en
+                ? 'Resolved at CHW (non-severe malaria, no referral)'
+                : 'Byakemutse kuri CHW (malariya idakomeye, nta kohereza)')
               : '') ||
             c.finalOutcomeHospital ||
             c.outcome ||
-            (c.status === 'Deceased' ? 'Deceased' : '') ||
-            (outcomeDone && c.status !== 'Pending' ? c.status : 'Pending'),
+            (c.status === 'Deceased' ? (en ? 'Deceased' : 'Yitabye Imana') : '') ||
+            (outcomeDone && c.status !== 'Pending' ? statusLabel(c.status) : statusLabel('Pending')),
           done: outcomeDone,
           current: outcomeDone,
         },
@@ -270,9 +305,11 @@ export function PatientJourneyTimeline({
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-900">Patient journey</h3>
+        <h3 className="text-sm font-semibold text-slate-900">
+          {en ? 'Patient journey' : 'Urugendo rw\'umurwayi'}
+        </h3>
         <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
-          Live status
+          {en ? 'Live status' : 'Imimerere y\'ubu'}
         </span>
       </div>
       <div className="relative space-y-0">

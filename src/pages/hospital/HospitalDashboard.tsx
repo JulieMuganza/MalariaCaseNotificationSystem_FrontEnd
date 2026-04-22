@@ -102,8 +102,13 @@ export function HospitalDashboard() {
   const byStatus = stats?.byStatus ?? {};
   const admitted =
     typeof byStatus['Admitted'] === 'number' ?
-      byStatus['Admitted']
-    : clinicalCases.filter((c) => c.status === 'Admitted').length;
+      (byStatus['Admitted'] ?? 0) +
+      (byStatus['Treated'] ?? 0) +
+      (byStatus['Discharged'] ?? 0) +
+      (byStatus['Deceased'] ?? 0)
+    : clinicalCases.filter((c) =>
+        ['Admitted', 'Treated', 'Discharged', 'Deceased'].includes(c.status)
+      ).length;
   const dischargedCount =
     typeof byStatus['Discharged'] === 'number' ?
       byStatus['Discharged'] + (byStatus['Treated'] ?? 0)

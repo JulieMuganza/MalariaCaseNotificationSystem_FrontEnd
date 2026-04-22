@@ -8,6 +8,7 @@ import {
   UserIcon,
   MapPinIcon,
   MailIcon,
+  PhoneIcon,
   ShieldCheckIcon,
   GlobeIcon,
   PencilIcon,
@@ -23,12 +24,14 @@ export function CHWSettingsPage() {
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
   const [district, setDistrict] = useState(user?.district ?? '');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!user || editing) return;
     setName(user.name);
+    setPhone(user.phone ?? '');
     setDistrict(user.district ?? '');
   }, [user, editing]);
 
@@ -57,9 +60,11 @@ export function CHWSettingsPage() {
       toast.error(en ? 'District is required' : 'Akarere karakenewe');
       return;
     }
-    const body: { name?: string; district?: string } = {};
+    const nextPhone = phone.trim();
+    const body: { name?: string; district?: string; phone?: string } = {};
     if (nextName !== user?.name) body.name = nextName;
     if (nextDistrict !== user?.district) body.district = nextDistrict;
+    if (nextPhone !== (user?.phone ?? '')) body.phone = nextPhone;
     if (Object.keys(body).length === 0) {
       setEditing(false);
       return;
@@ -80,6 +85,7 @@ export function CHWSettingsPage() {
 
   const handleCancel = () => {
     setName(user?.name ?? '');
+    setPhone(user?.phone ?? '');
     setDistrict(user?.district ?? '');
     setEditing(false);
   };
@@ -193,6 +199,26 @@ export function CHWSettingsPage() {
                     ? 'Email cannot be changed here. Contact support if it is wrong.'
                     : 'Imeri ntishobora guhindurwa hano.'}
                 </p>
+              </div>
+              <div>
+                <p className={labelClass}>{en ? 'Phone number' : 'Nimero ya telefoni'}</p>
+                {editing ? (
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className={inputClass}
+                    autoComplete="tel"
+                    placeholder={en ? 'Optional' : 'Si ngombwa'}
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <PhoneIcon size={14} className="text-gray-300" />
+                    <p className="text-sm font-semibold text-gray-900">
+                      {user?.phone ?? '—'}
+                    </p>
+                  </div>
+                )}
               </div>
               <div>
                 <p className={labelClass}>

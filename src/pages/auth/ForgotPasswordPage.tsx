@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { MailIcon, SendIcon, ArrowLeftIcon } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 
-import forgotImage from '../../assets/img/Image (8).jpg';
+const forgotImage = new URL('../../assets/img/Image (1).jpg', import.meta.url).href;
 
 export function ForgotPasswordPage() {
   const { t } = useTranslation();
@@ -112,7 +112,7 @@ export function ForgotPasswordPage() {
             animate={{ scale: 1 }}
             transition={{ duration: 0.8 }}
             src={forgotImage} 
-            alt="Healthcare professionals" 
+            alt="Malaria vector awareness illustration" 
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-primary via-gray-900/40 to-transparent" />

@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageToggle } from '../components/shared/LanguageToggle';
 
-import heroImage from '../assets/img/Image (11).jpg';
-import teamImage from '../assets/img/Image (9).jpg';
-import patientImage from '../assets/img/Image (7).jpg';
+const heroImage = new URL('../assets/img/image (11).jpg', import.meta.url).href;
+const teamImage = new URL('../assets/img/image (9).jpg', import.meta.url).href;
+const patientImage = new URL('../assets/img/image (7).jpg', import.meta.url).href;
 
 export function LandingPage() {
   const [showTopBtn, setShowTopBtn] = useState(false);

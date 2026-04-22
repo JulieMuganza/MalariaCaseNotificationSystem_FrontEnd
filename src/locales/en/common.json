@@ -35,5 +35,11 @@
   "profile": "Profile",
   "email": "Email",
   "password": "Password",
-  "confirm": "Confirm"
+  "confirm": "Confirm",
+  "notFound.code": "404",
+  "notFound.title": "Page not found",
+  "notFound.description": "This link does not match any page in the Malaria Case Notification System. Check the URL or go back to the home page.",
+  "notFound.home": "Home",
+  "notFound.signIn": "Sign in",
+  "notFound.goBack": "Go back"
 }

@@ -13,6 +13,7 @@ import { apiFetch } from '../../lib/api';
 import { backendAuthUrl } from '../../lib/config';
 import { LanguageToggle } from '../../components/shared/LanguageToggle';
 
+/** Lowercase `image (N).jpg` matches repo files on Linux/Vercel. Login = 8, register = 6. */
 const loginImage = new URL('../../assets/img/image (8).jpg', import.meta.url).href;
 const registerImage = new URL('../../assets/img/image (6).jpg', import.meta.url).href;
 

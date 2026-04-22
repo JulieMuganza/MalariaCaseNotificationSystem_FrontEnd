@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { dashboardPathForRole } from '../../auth/rolePaths';
 import { apiFetch } from '../../lib/api';
 
+/** Same panel style as register; lowercase filename for Vercel/Linux builds. */
 const otpImage = new URL('../../assets/img/image (6).jpg', import.meta.url).href;
 
 export function OTPPage() {

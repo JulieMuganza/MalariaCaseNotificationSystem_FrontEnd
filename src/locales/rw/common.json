@@ -35,5 +35,11 @@
   "profile": "Umwirondoro",
   "email": "Imeli",
   "password": "Ijambo ry'ibanga",
-  "confirm": "Emeza"
+  "confirm": "Emeza",
+  "notFound.code": "404",
+  "notFound.title": "Urupapuro ntirabonetse",
+  "notFound.description": "Iyi link ntihuye na rupapuro rwa Sisitemu yo Kumenyesha Malariya. Suzuma aderesi cyangwa subira ku rubuga rw'ibanze.",
+  "notFound.home": "Ahabanza",
+  "notFound.signIn": "Winjira",
+  "notFound.goBack": "Subira inyuma"
 }

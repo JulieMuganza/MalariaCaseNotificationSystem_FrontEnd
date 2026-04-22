@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { MailIcon, SendIcon, ArrowLeftIcon } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 
+/** Same hero asset as login; lowercase filename for Vercel/Linux builds. */
 const forgotImage = new URL('../../assets/img/image (8).jpg', import.meta.url).href;
 
 export function ForgotPasswordPage() {

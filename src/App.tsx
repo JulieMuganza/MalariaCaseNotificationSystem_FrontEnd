@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
@@ -66,6 +66,7 @@ import { RichNotificationsPage } from './pages/rich/RichNotificationsPage';
 import { RichMessagesPage } from './pages/rich/RichMessagesPage';
 import { RichReportsPage } from './pages/rich/RichReportsPage';
 import { RichProfile } from './pages/rich/RichProfile';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 export function App() {
   return (
@@ -294,7 +295,7 @@ export function App() {
               <Route path="export" element={<AdminExport />} />
             </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           </CasesProvider>
         </AuthProvider>

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { MailIcon, SendIcon, ArrowLeftIcon } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 
-const forgotImage = new URL('../../assets/img/Image (1).jpg', import.meta.url).href;
+const forgotImage = new URL('../../assets/img/Image (8).jpg', import.meta.url).href;
 
 export function ForgotPasswordPage() {
   const { t } = useTranslation();

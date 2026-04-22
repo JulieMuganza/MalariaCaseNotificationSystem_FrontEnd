@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '../components/shared/LanguageToggle';
 
 const heroImage = new URL('../assets/img/image (11).jpg', import.meta.url).href;
@@ -8,6 +9,7 @@ const teamImage = new URL('../assets/img/image (9).jpg', import.meta.url).href;
 const patientImage = new URL('../assets/img/image (7).jpg', import.meta.url).href;
 
 export function LandingPage() {
+  const { t } = useTranslation();
   const [showTopBtn, setShowTopBtn] = useState(false);
 
   useEffect(() => {
@@ -40,13 +42,20 @@ export function LandingPage() {
               M
             </div>
             <span className="text-xl font-bold tracking-tight text-gray-900">
-              Malaria<span className="text-primary text-opacity-80">Sync</span>
+              {t('landing.brand.malaria')}
+              <span className="text-primary text-opacity-80">{t('landing.brand.sync')}</span>
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#hero" onClick={(e) => handleNavClick(e, 'hero')} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">Home</a>
-            <a href="#features" onClick={(e) => handleNavClick(e, 'features')} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">Features</a>
-            <a href="#trust" onClick={(e) => handleNavClick(e, 'trust')} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">Impact</a>
+            <a href="#hero" onClick={(e) => handleNavClick(e, 'hero')} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">
+              {t('landing.nav.home')}
+            </a>
+            <a href="#features" onClick={(e) => handleNavClick(e, 'features')} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">
+              {t('landing.nav.features')}
+            </a>
+            <a href="#trust" onClick={(e) => handleNavClick(e, 'trust')} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">
+              {t('landing.nav.impact')}
+            </a>
           </div>
           <div className="flex items-center gap-3 sm:gap-4">
             <LanguageToggle variant="light" />
@@ -54,13 +63,13 @@ export function LandingPage() {
               to="/login?mode=login" 
               className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
             >
-              Sign In
+              {t('landing.signIn')}
             </Link>
             <Link 
               to="/login?mode=register" 
               className="text-sm font-semibold bg-primary text-white px-5 py-2.5 rounded-full hover:bg-primary/90 transition-all shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 active:scale-95"
             >
-              Register
+              {t('landing.register')}
             </Link>
           </div>
         </div>
@@ -81,20 +90,24 @@ export function LandingPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
-                National Health Initiative
+                {t('landing.hero.badge')}
               </div>
               <h1 className="text-5xl lg:text-7xl font-extrabold tracking-tight text-gray-900 leading-[1.1] mb-6">
-                Eradicating Malaria through <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-teal-500">Real-Time</span> Action.
+                {t('landing.hero.titleBefore')}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-teal-500">
+                  {t('landing.hero.titleHighlight')}
+                </span>
+                {t('landing.hero.titleAfter')}
               </h1>
               <p className="text-lg lg:text-xl text-gray-600 mb-8 leading-relaxed max-w-lg">
-                A unified platform for healthcare workers, clinics, and national agencies to detect, report, and respond to malaria cases instantly.
+                {t('landing.hero.subtitle')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link 
                   to="/login?mode=register" 
                   className="inline-flex justify-center items-center gap-2 bg-primary text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 active:scale-95 group"
                 >
-                  Join the Network
+                  {t('landing.cta.joinNetwork')}
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
@@ -103,7 +116,7 @@ export function LandingPage() {
                   to="/login?mode=login" 
                   className="inline-flex justify-center items-center px-8 py-4 rounded-full text-lg font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
                 >
-                  Access Portal
+                  {t('landing.cta.accessPortal')}
                 </Link>
               </div>
             </motion.div>
@@ -117,7 +130,7 @@ export function LandingPage() {
               <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl">
                 <img 
                   src={heroImage} 
-                  alt="Mosquito over Rwanda map" 
+                  alt={t('landing.img.heroAlt')}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-gray-900/0 to-gray-900/0"></div>
@@ -136,10 +149,10 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 mb-4">
-              Empowering Healthcare Providers
+              {t('landing.features.title')}
             </h2>
             <p className="text-lg text-gray-600">
-              Our system connects Community Health Workers, local clinics, and major hospitals into a single, cohesive reporting layer.
+              {t('landing.features.subtitle')}
             </p>
           </div>
 
@@ -150,9 +163,9 @@ export function LandingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Rapid Notification</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{t('landing.feature1.title')}</h3>
               <p className="text-gray-600 leading-relaxed">
-                Report confirmed cases instantly to trigger automated alerts across the healthcare network, ensuring no delay in patient care.
+                {t('landing.feature1.body')}
               </p>
             </div>
 
@@ -162,9 +175,9 @@ export function LandingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Geographic Tracking</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{t('landing.feature2.title')}</h3>
               <p className="text-gray-600 leading-relaxed">
-                Visualize outbreaks in real-time with comprehensive GIS mapping to direct resources exactly where they are needed most.
+                {t('landing.feature2.body')}
               </p>
             </div>
 
@@ -174,9 +187,9 @@ export function LandingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Secure Data</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">{t('landing.feature3.title')}</h3>
               <p className="text-gray-600 leading-relaxed">
-                Patient privacy is paramount. End-to-end encryption ensures all medical data is handled according to strict national regulations.
+                {t('landing.feature3.body')}
               </p>
             </div>
           </div>
@@ -189,13 +202,13 @@ export function LandingPage() {
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 space-y-8">
               <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-900">
-                Data-driven decisions save lives
+                {t('landing.trust.title')}
               </h2>
               <p className="text-lg text-gray-600">
-                Join thousands of healthcare professionals who rely on MalariaSync daily to coordinate responses, manage patient outcomes, and prevent community spread.
+                {t('landing.trust.subtitle')}
               </p>
               <ul className="space-y-4">
-                {['Verified accurate clinical reporting', 'Seamless hospital transfers', 'Automated epidemiological analytics'].map((item, i) => (
+                {[t('landing.trust.bullet1'), t('landing.trust.bullet2'), t('landing.trust.bullet3')].map((item, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -212,7 +225,7 @@ export function LandingPage() {
                 <div className="overflow-hidden rounded-3xl shadow-lg bg-gray-100 aspect-[3/4]">
                   <img
                     src={teamImage}
-                    alt="Mosquito surveillance illustration"
+                    alt={t('landing.img.teamAlt')}
                     className="h-full w-full object-cover object-center"
                   />
                 </div>
@@ -221,7 +234,7 @@ export function LandingPage() {
                 <div className="overflow-hidden rounded-3xl shadow-lg bg-gray-100 aspect-[3/4]">
                   <img
                     src={patientImage}
-                    alt="Malaria vector awareness illustration"
+                    alt={t('landing.img.patientAlt')}
                     className="h-full w-full object-cover object-center"
                   />
                 </div>
@@ -239,15 +252,16 @@ export function LandingPage() {
               M
             </div>
             <span className="text-lg font-bold tracking-tight text-gray-900">
-              Malaria<span className="text-primary text-opacity-80">Sync</span>
+              {t('landing.brand.malaria')}
+              <span className="text-primary text-opacity-80">{t('landing.brand.sync')}</span>
             </span>
           </div>
           <p className="text-gray-500 text-sm">
-            &copy; {new Date().getFullYear()} Malaria Case Notification System. All rights reserved.
+            &copy; {new Date().getFullYear()} {t('landing.footer.copyright')}
           </p>
           <div className="flex gap-4">
-             <a href="#" className="text-gray-400 hover:text-gray-600">Privacy Policy</a>
-             <a href="#" className="text-gray-400 hover:text-gray-600">Terms of Service</a>
+             <a href="#" className="text-gray-400 hover:text-gray-600">{t('landing.footer.privacy')}</a>
+             <a href="#" className="text-gray-400 hover:text-gray-600">{t('landing.footer.terms')}</a>
           </div>
         </div>
       </footer>
@@ -261,7 +275,7 @@ export function LandingPage() {
             exit={{ opacity: 0, y: 20 }}
             onClick={scrollToTop}
             className="fixed bottom-8 right-8 z-50 p-3 bg-primary text-white rounded-full shadow-lg hover:bg-primary/90 transition-colors"
-            aria-label="Back to top"
+            aria-label={t('landing.backToTop')}
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />

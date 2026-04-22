@@ -13,8 +13,8 @@ import { apiFetch } from '../../lib/api';
 import { backendAuthUrl } from '../../lib/config';
 import { LanguageToggle } from '../../components/shared/LanguageToggle';
 
-const loginImage = new URL('../../assets/img/Image (1).jpg', import.meta.url).href;
-const registerImage = new URL('../../assets/img/Image (2).jpg', import.meta.url).href;
+const loginImage = new URL('../../assets/img/Image (8).jpg', import.meta.url).href;
+const registerImage = new URL('../../assets/img/Image (6).jpg', import.meta.url).href;
 
 // Reusable icon wrapper
 function FieldIconWrap({ children, icon: Icon }: { children: React.ReactNode; icon: any }) {

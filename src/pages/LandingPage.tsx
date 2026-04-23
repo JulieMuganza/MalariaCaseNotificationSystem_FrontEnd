@@ -42,8 +42,8 @@ export function LandingPage() {
               M
             </div>
             <span className="text-xl font-bold tracking-tight text-gray-900">
-              {t('landing.brand.malaria')}
-              <span className="text-primary text-opacity-80">{t('landing.brand.sync')}</span>
+              Malaria
+              <span className="text-primary text-opacity-80">Sync</span>
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8">

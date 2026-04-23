@@ -87,7 +87,7 @@ const PIPELINE_STEPS: PipelineStep[] = [
   },
 ];
 
-const OUTCOME_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+const OUTCOME_COLORS = ['#10b981', 'var(--role-accent)', '#f59e0b', '#ef4444'];
 
 export function RichDashboard() {
   const navigate = useNavigate();
@@ -192,8 +192,8 @@ export function RichDashboard() {
       value: totalCases,
       sub: en ? `vs ${allTotals.total} total` : `kuri ${allTotals.total} byose`,
       icon: FileTextIcon,
-      bg: 'from-[#2563eb] to-[#1d4ed8]',
-      light: 'bg-[#2563eb]/10 text-[#2563eb]',
+      bg: 'from-[color:var(--role-accent)] to-[color:var(--role-accent)]',
+      light: 'bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]',
     },
     {
       label: en ? 'SM Positive' : 'Byagize Ivuriro',
@@ -208,16 +208,16 @@ export function RichDashboard() {
       value: activeCases,
       sub: en ? 'In pipeline' : 'Biracyakomeje',
       icon: ActivityIcon,
-      bg: 'from-[#2563eb] to-[#1d4ed8]',
-      light: 'bg-[#2563eb]/10 text-[#2563eb]',
+      bg: 'from-[color:var(--role-accent)] to-[color:var(--role-accent)]',
+      light: 'bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]',
     },
     {
       label: en ? 'Recovered / went home' : 'Bakize / basubiye mu rugo',
       value: recovered,
       sub: totalCases > 0 ? `${Math.round((recovered / totalCases) * 100)}% ${en ? 'rate' : 'igipimo'}` : '—',
       icon: CheckCircle2Icon,
-      bg: 'from-[#2563eb] to-[#1d4ed8]',
-      light: 'bg-[#2563eb]/10 text-[#2563eb]',
+      bg: 'from-[color:var(--role-accent)] to-[color:var(--role-accent)]',
+      light: 'bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]',
     },
     {
       label: en ? 'Deaths' : 'Bapfuye',
@@ -252,7 +252,7 @@ export function RichDashboard() {
                       ? 'SFR — Kigali'
                       : 'Incamake ya RICH'}
             </h1>
-            <span className="flex items-center gap-1.5 rounded-full border border-[#2563eb]/20 bg-[#2563eb]/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[#2563eb]">
+            <span className="flex items-center gap-1.5 rounded-full border border-[color:var(--role-accent-soft)] bg-[color:var(--role-accent-soft)] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[color:var(--role-accent)]">
               <RadioIcon size={10} className="animate-pulse" />
               {en ? 'Live' : 'Birakora'}
             </span>
@@ -278,12 +278,12 @@ export function RichDashboard() {
           )}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-black transition-colors ${showFilters ? 'border-[#2563eb]/25 bg-[#2563eb]/10 text-[#2563eb]' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-black transition-colors ${showFilters ? 'border-[color:var(--role-accent-soft)] bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'}`}
           >
             <FilterIcon size={14} />{en ? 'Filters' : 'Gushungura'}
           </button>
           {loading && (
-            <div className="flex items-center gap-2 rounded-xl bg-[#2563eb]/10 px-3 py-2 text-xs font-bold text-[#2563eb]">
+            <div className="flex items-center gap-2 rounded-xl bg-[color:var(--role-accent-soft)] px-3 py-2 text-xs font-bold text-[color:var(--role-accent)]">
               <RefreshCwIcon size={14} className="animate-spin" />
               {en ? 'Syncing…' : 'Vugurura…'}
             </div>
@@ -302,7 +302,7 @@ export function RichDashboard() {
           >
             <div className={`${cardClass} flex flex-wrap items-center gap-4`}>
               <div className="flex items-center gap-2">
-                <FilterIcon size={14} className="text-[#2563eb]" />
+                <FilterIcon size={14} className="text-[color:var(--role-accent)]" />
                 <span className="text-xs font-black uppercase tracking-widest text-gray-500">{en ? 'Filter by:' : 'Gushungura:'}</span>
               </div>
               <div className="flex flex-col gap-1">
@@ -310,7 +310,7 @@ export function RichDashboard() {
                 <select
                   value={filterDistrict}
                   onChange={(e) => setFilterDistrict(e.target.value)}
-                  className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/25"
+                  className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[color:var(--role-accent-soft)]"
                 >
                   {allDistricts.map((d) => <option key={d} value={d}>{d === 'All' ? allLabel : d}</option>)}
                 </select>
@@ -320,7 +320,7 @@ export function RichDashboard() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/25"
+                  className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[color:var(--role-accent-soft)]"
                 >
                   {statusOptions.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -328,7 +328,7 @@ export function RichDashboard() {
                 </select>
               </div>
               {isFiltered && (
-                <div className="rounded-xl border border-[#2563eb]/20 bg-[#2563eb]/10 px-3 py-1.5 text-xs font-black text-[#2563eb]">
+                <div className="rounded-xl border border-[color:var(--role-accent-soft)] bg-[color:var(--role-accent-soft)] px-3 py-1.5 text-xs font-black text-[color:var(--role-accent)]">
                   {filtered.length} {en ? 'filtered cases' : 'ibibazo bishungutse'}
                 </div>
               )}
@@ -375,14 +375,14 @@ export function RichDashboard() {
         <section className={cardClass}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-[#2563eb]/10 p-1.5">
-                <FileTextIcon size={16} className="text-[#2563eb]" />
+              <div className="rounded-lg bg-[color:var(--role-accent-soft)] p-1.5">
+                <FileTextIcon size={16} className="text-[color:var(--role-accent)]" />
               </div>
               <h2 className="text-sm font-bold uppercase tracking-tight text-gray-900">
                 {en ? 'Case distribution' : 'Ikwirakwira ry’ibibazo'}
               </h2>
             </div>
-            <button onClick={() => navigate(`${base}/map`)} className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-[#2563eb] hover:underline">
+            <button onClick={() => navigate(`${base}/map`)} className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-[color:var(--role-accent)] hover:underline">
               {en ? 'Full Map' : 'Ikarita Yose'} <ArrowRightIcon size={13} />
             </button>
           </div>
@@ -406,19 +406,19 @@ export function RichDashboard() {
         {/* Live Activity Feed */}
         <section className={`${cardClass} flex flex-col`}>
           <div className="flex items-center gap-2 mb-4">
-            <div className="rounded-lg bg-[#2563eb]/10 p-1.5">
-              <RadioIcon size={16} className="text-[#2563eb]" />
+            <div className="rounded-lg bg-[color:var(--role-accent-soft)] p-1.5">
+              <RadioIcon size={16} className="text-[color:var(--role-accent)]" />
             </div>
             <h2 className="text-sm font-bold uppercase tracking-tight text-gray-900">
               {en ? 'Live Activity Feed' : 'Amakuru Mashya'}
             </h2>
-            <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-[#2563eb] text-[9px] font-black text-white">
+            <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--role-accent)] text-[9px] font-black text-white">
               {feedNotifs.length}
             </span>
             <button
               type="button"
               onClick={() => navigate(`${base}/notifications`)}
-              className="ml-2 text-[10px] font-black uppercase tracking-widest text-[#2563eb] hover:underline"
+              className="ml-2 text-[10px] font-black uppercase tracking-widest text-[color:var(--role-accent)] hover:underline"
             >
               {en ? 'View all' : 'Reba byose'}
             </button>
@@ -437,7 +437,7 @@ export function RichDashboard() {
                   transition={{ delay: i * 0.04 }}
                   className="flex items-start gap-3 rounded-xl border border-gray-50 bg-gray-50/60 p-3 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#2563eb]/15 text-[#2563eb]">
+                  <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]">
                     <ZapIcon size={12} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -448,7 +448,7 @@ export function RichDashboard() {
                         {n.targetRole}
                       </span>
                       {n.phase && (
-                        <span className="rounded-full border border-[#2563eb]/20 bg-[#2563eb]/10 px-1.5 py-0.5 text-[9px] font-black text-[#2563eb]">
+                        <span className="rounded-full border border-[color:var(--role-accent-soft)] bg-[color:var(--role-accent-soft)] px-1.5 py-0.5 text-[9px] font-black text-[color:var(--role-accent)]">
                           Phase {n.phase}
                         </span>
                       )}
@@ -468,8 +468,8 @@ export function RichDashboard() {
       {/* Case Pipeline Timeline */}
       <section className={cardClass}>
         <div className="flex items-center gap-2 mb-6">
-          <div className="rounded-lg bg-[#2563eb]/10 p-1.5">
-            <ActivityIcon size={16} className="text-[#2563eb]" />
+          <div className="rounded-lg bg-[color:var(--role-accent-soft)] p-1.5">
+            <ActivityIcon size={16} className="text-[color:var(--role-accent)]" />
           </div>
           <h2 className="text-sm font-bold uppercase tracking-tight text-gray-900">
             {en
@@ -515,8 +515,8 @@ export function RichDashboard() {
         {/* Case results */}
         <section className={`${cardClass} space-y-4`}>
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-[#2563eb]/10 p-1.5">
-              <UserRoundIcon size={16} className="text-[#2563eb]" />
+            <div className="rounded-lg bg-[color:var(--role-accent-soft)] p-1.5">
+              <UserRoundIcon size={16} className="text-[color:var(--role-accent)]" />
             </div>
             <h2 className="text-sm font-bold uppercase tracking-tight text-gray-900">
               {en ? 'Case Results' : 'Ibyavuye mu manza'}
@@ -529,7 +529,7 @@ export function RichDashboard() {
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11, fontWeight: 700 }} allowDecimals={false} />
                 <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #E5E7EB', fontSize: 12 }} />
-                <Bar dataKey="count" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="count" fill="var(--role-accent)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -538,8 +538,8 @@ export function RichDashboard() {
         {/* Outcome donut */}
         <section className={`${cardClass} space-y-4`}>
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-[#2563eb]/10 p-1.5">
-              <CheckCircle2Icon size={16} className="text-[#2563eb]" />
+            <div className="rounded-lg bg-[color:var(--role-accent-soft)] p-1.5">
+              <CheckCircle2Icon size={16} className="text-[color:var(--role-accent)]" />
             </div>
             <h2 className="text-sm font-bold uppercase tracking-tight text-gray-900">
               {en ? 'Case Outcomes' : 'Incamake z\'Ibibazo'}
@@ -579,8 +579,8 @@ export function RichDashboard() {
       <section className={cardClass}>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-[#2563eb]/10 p-1.5">
-              <FileTextIcon size={16} className="text-[#2563eb]" />
+            <div className="rounded-lg bg-[color:var(--role-accent-soft)] p-1.5">
+              <FileTextIcon size={16} className="text-[color:var(--role-accent)]" />
             </div>
             <h2 className="text-sm font-bold uppercase tracking-tight text-gray-900">
               {en ? 'Full Clinical Detail' : 'Amakuru Yuzuye'}

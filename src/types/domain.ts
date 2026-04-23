@@ -81,7 +81,7 @@ export interface MalariaCase {
   status: CaseStatus;
   chwName: string;
   chwId: string;
-  /** CHW severe referral: first receiving facility (health center vs local clinic). */
+  /** CHW severe referral: first receiving facility (health center vs health post). */
   chwPrimaryReferral?: 'HEALTH_CENTER' | 'LOCAL_CLINIC';
   healthCenter?: string;
   hospital?: string;

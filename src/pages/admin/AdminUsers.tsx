@@ -21,6 +21,12 @@ const ROLE_OPTIONS: AuthUserRole[] = [
 export function AdminUsers() {
   const { i18n } = useTranslation();
   const en = !i18n.language.startsWith('rw');
+  const roleLabel = (role: AuthUserRole | string) =>
+    role === 'Local Clinic'
+      ? en
+        ? 'Health Post'
+        : 'Ivuriro Riciriritse'
+      : role;
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [showAdd, setShowAdd] = useState(false);
@@ -234,7 +240,7 @@ export function AdminUsers() {
               >
                 {ROLE_OPTIONS.map((r) => (
                   <option key={r} value={r}>
-                    {r}
+                    {roleLabel(r)}
                   </option>
                 ))}
               </select>
@@ -337,7 +343,7 @@ export function AdminUsers() {
             'PFTH',
             'SFR',
           ].map((r) => (
-            <option key={r}>{r}</option>
+            <option key={r}>{roleLabel(r)}</option>
           ))}
         </select>
       </div>
@@ -398,7 +404,7 @@ export function AdminUsers() {
                                 : 'bg-gray-100 text-gray-700'
                     }`}
                   >
-                    {u.role}
+                    {roleLabel(u.role)}
                   </span>
                 </td>
                 <td className="px-5 py-3 text-gray-600">{u.district}</td>

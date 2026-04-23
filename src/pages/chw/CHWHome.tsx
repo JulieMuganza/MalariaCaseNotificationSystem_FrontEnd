@@ -203,7 +203,7 @@ export function CHWHome() {
       Admitted: en ? 'Admitted' : 'Byakiriwe mu bitaro',
       Treated: en ? 'Treated' : 'Yazamuwe',
       Discharged: en ? 'Discharged' : 'Yasezerewe',
-      Resolved: en ? 'Resolved' : 'Byakemutse',
+      Resolved: en ? 'Resolved' : 'Yasezerewe',
       Deceased: en ? 'Deceased' : 'Yitabye Imana',
     };
     return map[status] ?? status;
@@ -404,7 +404,7 @@ export function CHWHome() {
           trend={pctTrend(refThisWeek, refPrevWeek)}
         />
         <StatCard
-          label={en ? 'Resolved' : 'Byakemutse'}
+          label={en ? 'Resolved' : 'Yasezerewe'}
           value={resolvedCases}
           sparkline={sparkCritical}
           sinceLabel={sinceLabel}

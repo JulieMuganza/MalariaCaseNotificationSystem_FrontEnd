@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronDownIcon,
   MapPinIcon,
   SaveIcon,
   SendIcon,
@@ -14,6 +15,8 @@ import {
   ALL_DISTRICTS,
   provinceFromDistrict,
   SECTORS_BY_DISTRICT,
+  PEDIATRIC_DANGER_SIGNS,
+  PEDIATRIC_DANGER_SIGNS_PARENT,
   SEVERE_SYMPTOMS,
   getSymptomLabel,
 } from '../../data/mockData';
@@ -143,6 +146,10 @@ export function CHWNewCase() {
   const [insuranceType, setInsuranceType] = useState('');
   const [rapidTestResult, setRapidTestResult] = useState<'Positive' | 'Negative' | ''>('');
   const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [showPediatricDangerSigns, setShowPediatricDangerSigns] = useState(false);
+  const hasPediatricDangerSignsSelected = symptoms.some((s) =>
+    PEDIATRIC_DANGER_SIGNS.includes(s as (typeof PEDIATRIC_DANGER_SIGNS)[number])
+  );
 
   /** Patient location — all districts (same routing rules everywhere; not limited to CHW home province). */
   const districtOptions = useMemo((): District[] => [...ALL_DISTRICTS] as District[], []);
@@ -175,8 +182,25 @@ export function CHWNewCase() {
   useEffect(() => {
     if (rapidTestResult === 'Negative') {
       setSymptoms([]);
+      setShowPediatricDangerSigns(false);
     }
   }, [rapidTestResult]);
+
+  useEffect(() => {
+    if (symptoms.some((s) => PEDIATRIC_DANGER_SIGNS.includes(s as (typeof PEDIATRIC_DANGER_SIGNS)[number]))) {
+      setShowPediatricDangerSigns(true);
+    }
+  }, [symptoms]);
+
+  const coreSevereSymptoms = useMemo(
+    () =>
+      SEVERE_SYMPTOMS.filter(
+        (s) =>
+          s !== PEDIATRIC_DANGER_SIGNS_PARENT &&
+          !PEDIATRIC_DANGER_SIGNS.includes(s as (typeof PEDIATRIC_DANGER_SIGNS)[number])
+      ),
+    []
+  );
 
   function toggleSymptom(s: string) {
     setSymptoms((prev) =>
@@ -203,7 +227,7 @@ export function CHWNewCase() {
   }
   const stepLabels = en
     ? ['Location', 'Demographics', 'RDT & symptoms', 'Review']
-    : ['Aho aherereye', 'Imibare y\'umurwayi', 'RDT n\'ibimenyetso', 'Isuzuma rya nyuma'];
+    : ['Aho aherereye', 'Imyirondoro y\'umurwayi', 'RDT n\'ibimenyetso', 'Isuzuma rya nyuma'];
   const sexOptions = en
     ? [
         { value: 'Male', label: 'Male' },
@@ -228,8 +252,8 @@ export function CHWNewCase() {
         { value: 'Negative', label: 'Negative' },
       ]
     : [
-        { value: 'Positive', label: 'Byagaragaye' },
-        { value: 'Negative', label: 'Nta byagaragaye' },
+        { value: 'Positive', label: 'Positifu' },
+        { value: 'Negative', label: 'Negatifu' },
       ];
   const insuranceTypeOptions = en
     ? ['CBHI', 'RAMA', 'MMI', 'Other']
@@ -446,8 +470,8 @@ export function CHWNewCase() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 <p className="text-xs text-gray-500 md:col-span-2 -mt-2">
                   {language === 'en'
-                    ? 'Select the patient’s district and location (all provinces). First-line facility routing uses this district.'
-                    : 'Hitamo akarere n’aho umurwayi aherereye (intara zose). Ikigo cy’ibanze gisanga ikimenyetso kuri aka karere.'}
+                    ? 'Select the patient’s location'
+                    : 'Hitamo aho umurwayi aherereye'}
                 </p>
                 <SelectField
                 label={en ? 'District' : 'Akarere'}
@@ -626,7 +650,7 @@ export function CHWNewCase() {
                         : 'Hitamo ibimenyetso byose bya malariya ikomeye:'}
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {SEVERE_SYMPTOMS.map((s) => (
+                      {coreSevereSymptoms.map((s) => (
                         <button
                           key={s}
                           type="button"
@@ -658,7 +682,64 @@ export function CHWNewCase() {
                           </span>
                         </button>
                       ))}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPediatricDangerSigns((prev) => !prev)
+                        }
+                        className={`w-full flex items-center justify-between gap-3 p-3.5 rounded-xl border text-left transition-all ${
+                          showPediatricDangerSigns || hasPediatricDangerSignsSelected
+                            ? 'border-danger-300 bg-danger-50 text-danger-800'
+                            : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        <span className="text-sm font-medium">
+                          {getSymptomLabel(PEDIATRIC_DANGER_SIGNS_PARENT, language)}
+                        </span>
+                        <ChevronDownIcon
+                          size={16}
+                          className={`transition-transform ${
+                            showPediatricDangerSigns ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
                     </div>
+                    {showPediatricDangerSigns && (
+                      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                        {PEDIATRIC_DANGER_SIGNS.map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => toggleSymptom(s)}
+                            className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${symptoms.includes(s) ? 'border-danger-300 bg-danger-50 text-danger-800' : 'border-gray-200 text-gray-700 hover:border-gray-300'}`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${symptoms.includes(s) ? 'border-danger-500 bg-danger-500' : 'border-gray-300'}`}
+                            >
+                              {symptoms.includes(s) && (
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 12 12"
+                                  fill="none"
+                                >
+                                  <path
+                                    d="M2 6l3 3 5-5"
+                                    stroke="white"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              )}
+                            </div>
+                            <span className="text-sm font-medium">
+                              {getSymptomLabel(s, language)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {symptoms.length > 0 && (
                       <p className="text-xs font-semibold text-danger-600 bg-danger-50 px-3 py-2 rounded-lg">
                         {symptoms.length} {en ? 'symptom' : 'ikimenyetso'}
@@ -786,25 +867,25 @@ export function CHWNewCase() {
         title={
           rapidTestResult === 'Positive' && symptoms.length > 0
             ? language === 'en'
-              ? 'Send alert?'
-              : 'Ohereza ubutumwa?'
+              ? 'Send now?'
+              : 'Ohereza ubu?'
             : language === 'en'
-              ? 'Save case?'
-              : 'Bika dosiye?'
+              ? 'Save now?'
+              : 'Bika ubu?'
         }
         message={
           rapidTestResult === 'Positive' && symptoms.length > 0
             ? language === 'en'
-              ? 'This will notify the health center and RICH about this suspected severe malaria case. Ensure the patient is referred according to protocol.'
-              : 'Ibi bizamenyesha ikigo n’RICH ku mpfura y’imalariya ikomeye. Kohereza umurwayi uko biteganyijwe.'
+              ? 'Health center will get this alert now.'
+              : 'Ikigo nderabuzima kirahita kibona ubu butumwa.'
             : language === 'en'
-              ? 'No alert will be sent. The case will be saved and marked as resolved at CHW (non-severe malaria, no transfer).'
-              : 'Nta butumwa buzoherezwa. Dosiye irabika mu buryo bwawe.'
+              ? 'No alert will be sent. This case will be saved at CHW.'
+              : 'Nta butumwa bwoherezwa. Dosiye irabikwa kuri CHW.'
         }
         confirmText={
           rapidTestResult === 'Positive' && symptoms.length > 0
             ? language === 'en'
-              ? 'Send alert'
+              ? 'Send'
               : 'Ohereza'
             : language === 'en'
               ? 'Save'

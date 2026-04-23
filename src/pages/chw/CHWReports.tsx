@@ -61,7 +61,7 @@ export function CHWReports() {
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
           <h3 className="text-sm font-bold text-gray-900 mb-6">{en ? 'Case Status Distribution' : 'Ikwegereze ry\'imanza'}</h3>
           <div className="space-y-4">
-            <StatusProgressBar label={en ? 'Resolved' : 'Byakemutse'} count={resolved} total={totalCases} color="bg-teal-500" />
+            <StatusProgressBar label={en ? 'Resolved' : 'Yasezerewe'} count={resolved} total={totalCases} color="bg-teal-500" />
             <StatusProgressBar label={en ? 'Referred' : 'Byoherejwe'} count={referred} total={totalCases} color="bg-amber-500" />
             <StatusProgressBar label={en ? 'Pending' : 'Bitegereje'} count={pending} total={totalCases} color="bg-gray-400" />
           </div>

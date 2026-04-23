@@ -30,6 +30,9 @@ function translateTimelineEvent(event: string, en: boolean): string {
   if (e.toLowerCase().includes('patient referred from health center to district hospital')) {
     return 'Umurwayi yoherejwe ava ku Kigonderabuzima ajya ku Bitaro by\'Akarere';
   }
+  if (e.toLowerCase().includes('patient referred from health post to district hospital')) {
+    return "Umurwayi yoherejwe ava ku Ivuriro Riciriritse ajya ku Bitaro by'Akarere";
+  }
   return event;
 }
 
@@ -39,7 +42,7 @@ function translateRoleLabel(role: string, en: boolean): string {
   if (r === 'chw') return 'CHW';
   if (r === 'health center') return 'Ikigonderabuzima';
   if (r === 'district hospital') return 'Ibitaro by\'Akarere';
-  if (r === 'local clinic') return 'Ivuriro ry\'ibanze';
+  if (r === 'local clinic' || r === 'health post') return 'Ivuriro Riciriritse';
   if (r === 'referral hospital') return 'Ibitaro byoherezwa';
   return role;
 }

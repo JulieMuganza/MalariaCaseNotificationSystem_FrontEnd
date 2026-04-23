@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   BellIcon,
   ChevronRightIcon,
-  SearchIcon,
   Layers,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -18,11 +17,10 @@ const TIER_ALL = 'All' as const;
 type TierFilter =
   | typeof TIER_ALL
   | 'CHW'
+  | 'Health Post'
   | 'Health Center'
   | 'District Hospital'
   | 'Referral Hospital';
-
-type EventFilter = 'All' | 'Deceased' | 'Discharged' | 'Referral' | 'Severe';
 
 /**
  * Surveillance inbox rows often share the same targetRole (e.g. RICH) while the body
@@ -38,7 +36,14 @@ function tiersForNotification(n: Notification): TierFilter[] {
     tiers.add('CHW');
   }
   if (
-    /\bhealth center\b|health centre|local clinic|ikigo|->\s*health\s+center|hc->|hc→/i.test(
+    /\bhealth post\b|local clinic|ivuriro riciriritse|->\s*health\s+post|hp->|hp→/i.test(
+      blob
+    )
+  ) {
+    tiers.add('Health Post');
+  }
+  if (
+    /\bhealth center\b|health centre|ikigo nderabuzima|ikigo|->\s*health\s+center|hc->|hc→/i.test(
       blob
     )
   ) {
@@ -67,28 +72,11 @@ function tierMatchesSelection(n: Notification, tier: TierFilter): boolean {
   return tiersForNotification(n).includes(tier);
 }
 
-function inferEvent(title: string, message: string): EventFilter {
-  const t = `${title} ${message}`.toLowerCase();
-  if (t.includes('deceased') || t.includes('death') || t.includes('died')) return 'Deceased';
-  if (
-    t.includes('discharge') ||
-    t.includes('went home') ||
-    t.includes('left hospital') ||
-    t.includes('discharged')
-  ) {
-    return 'Discharged';
-  }
-  if (t.includes('referral') || t.includes('transfer') || t.includes('referred')) return 'Referral';
-  if (t.includes('severe')) return 'Severe';
-  return 'All';
-}
-
 export function RichNotificationsPage() {
   const {
     notifications,
     markNotificationRead,
     markAllNotificationsRead,
-    refreshNotifications,
   } = useAuth();
   const base = useSurveillanceBasePath();
   const partnerLabel = useSurveillancePartnerLabel();
@@ -98,8 +86,6 @@ export function RichNotificationsPage() {
   const en = language === 'en';
 
   const [tier, setTier] = useState<TierFilter>(TIER_ALL);
-  const [eventType, setEventType] = useState<EventFilter>('All');
-  const [search, setSearch] = useState('');
   const [markingAll, setMarkingAll] = useState(false);
 
   const sorted = useMemo(
@@ -119,18 +105,9 @@ export function RichNotificationsPage() {
   const filtered = useMemo(() => {
     return sorted.filter((n) => {
       if (!tierMatchesSelection(n, tier)) return false;
-      if (eventType !== 'All' && inferEvent(n.title, n.message || '') !== eventType)
-        return false;
-      if (!search.trim()) return true;
-      const q = search.toLowerCase();
-      return (
-        n.title.toLowerCase().includes(q) ||
-        (n.message && n.message.toLowerCase().includes(q)) ||
-        (n.caseId && n.caseId.toLowerCase().includes(q)) ||
-        (n.recipientRoles && n.recipientRoles.toLowerCase().includes(q))
-      );
+      return true;
     });
-  }, [sorted, tier, eventType, search]);
+  }, [sorted, tier]);
 
   /** Case refs that appear more than once — highlight shared context */
   const refCounts = useMemo(() => {
@@ -141,6 +118,15 @@ export function RichNotificationsPage() {
     }
     return m;
   }, [sorted]);
+
+  const tierTabs: Array<{ value: TierFilter; label: string }> = [
+    { value: TIER_ALL, label: en ? 'All' : 'Byose' },
+    { value: 'CHW', label: 'CHW' },
+    { value: 'Health Post', label: en ? 'Health Post' : 'Ivuriro Riciriritse' },
+    { value: 'Health Center', label: en ? 'Health Center' : 'Ikigo Nderabuzima' },
+    { value: 'District Hospital', label: en ? 'District Hospital' : "Ibitaro by'akarere" },
+    { value: 'Referral Hospital', label: en ? 'Referral Hospital' : 'Ibitaro byo kohereza' },
+  ];
 
   return (
     <div className="w-full max-w-[1240px] mx-auto space-y-6 animate-in fade-in duration-500">
@@ -172,69 +158,25 @@ export function RichNotificationsPage() {
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative w-[min(100%,18rem)] shrink-0">
-          <SearchIcon
-            className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
-            aria-hidden
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={en ? 'Search…' : 'Shakisha…'}
-            className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-8 pr-3 text-sm shadow-sm outline-none focus:border-[color:var(--role-accent)] focus:ring-2 focus:ring-[color:var(--role-accent)]/20"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={() => void refreshNotifications()}
-          className="shrink-0 rounded-lg border border-[color:var(--role-accent)]/25 bg-[color:var(--role-accent)]/10 px-3 py-2 text-sm font-semibold text-[color:var(--role-accent)] hover:bg-[color:var(--role-accent)]/15"
-        >
-          {en ? 'Refresh' : 'Ongera'}
-        </button>
-      </div>
-
-      <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-2">
-        <div>
-          <label
-            className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500"
-            htmlFor="rich-notif-tier"
-          >
-            {en ? 'Pathway / tier' : 'Inzira / icyiciro'}
-          </label>
-          <select
-            id="rich-notif-tier"
-            value={tier}
-            onChange={(e) => setTier(e.target.value as TierFilter)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700"
-          >
-            <option value={TIER_ALL}>{en ? 'All pathways' : 'Inzira zose'}</option>
-            <option value="CHW">CHW</option>
-            <option value="Health Center">{en ? 'Health Center' : 'Ikigo Nderabuzima'}</option>
-            <option value="District Hospital">{en ? 'District Hospital' : "Ibitaro by'akarere"}</option>
-            <option value="Referral Hospital">{en ? 'Referral Hospital' : 'Ibitaro byo kohereza'}</option>
-          </select>
-        </div>
-        <div>
-          <label
-            className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500"
-            htmlFor="rich-notif-event"
-          >
-            {en ? 'Event type' : 'Ubwoko'}
-          </label>
-          <select
-            id="rich-notif-event"
-            value={eventType}
-            onChange={(e) => setEventType(e.target.value as EventFilter)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700"
-          >
-            <option value="All">{en ? 'All event types' : 'Ubwoko bwose'}</option>
-            <option value="Deceased">{en ? 'Patient deceased' : 'Umurwayi yapfuye'}</option>
-            <option value="Discharged">{en ? 'Patient discharged' : 'Umurwayi yasohotse'}</option>
-            <option value="Referral">{en ? 'Referral / transfer' : 'Kohereza'}</option>
-            <option value="Severe">{en ? 'Severe malaria updates' : 'Ivugurura ry\'indwara ikomeye'}</option>
-          </select>
+      <div className="rounded-2xl border border-gray-200 bg-white p-2 shadow-sm">
+        <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+          {tierTabs.map((tab) => {
+            const active = tier === tab.value;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setTier(tab.value)}
+                className={`shrink-0 rounded-xl px-3 py-2 text-xs font-bold transition ${
+                  active
+                    ? 'bg-[color:var(--role-accent)] text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

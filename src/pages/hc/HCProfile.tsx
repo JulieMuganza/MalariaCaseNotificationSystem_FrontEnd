@@ -9,6 +9,21 @@ export function HCProfile() {
 
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
   const en = language === 'en';
+  const isHealthPost = user?.role === 'Local Clinic';
+  const roleLabel =
+    isHealthPost
+      ? en
+        ? 'Health Post'
+        : 'Ivuriro Riciriritse'
+      : (user?.role ?? '—');
+  const accountLabel =
+    isHealthPost
+      ? en
+        ? 'Health Post account details'
+        : "Konti y'ivuriro riciriritse"
+      : en
+        ? 'Health Center account details'
+        : "Konti y'ikigo nderabuzima";
 
   return (
     <div className={hcPage.wrap}>
@@ -17,7 +32,7 @@ export function HCProfile() {
           {en ? 'Your profile' : 'Umwirondoro'}
         </h1>
         <p className={hcPage.desc}>
-          {en ? 'Health Center account details' : 'Konti y\'ikigo nderabuzima'}
+          {accountLabel}
         </p>
       </div>
 
@@ -59,7 +74,7 @@ export function HCProfile() {
               <dt className="text-sm font-semibold text-gray-500">
                 {en ? 'Role' : 'Uruhare'}
               </dt>
-              <dd className="mt-1 font-semibold text-gray-900">{user?.role ?? '—'}</dd>
+              <dd className="mt-1 font-semibold text-gray-900">{roleLabel}</dd>
             </div>
           </div>
         </dl>

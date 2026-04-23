@@ -52,7 +52,7 @@ export function PatientDetailModal({
                 type="button"
                 onClick={onClose}
                 className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100"
-                aria-label="Close"
+                aria-label={en ? 'Close' : 'Funga'}
               >
                 <XIcon size={18} />
               </button>
@@ -82,7 +82,7 @@ export function PatientDetailModal({
 
               <div className="mt-4 border-t border-slate-100 pt-3">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                  {en ? 'Timeline' : 'Ibiboneka'}
+                  {en ? 'Timeline' : 'Uruhererekane'}
                 </p>
                 <div className="mt-2 space-y-2">
                   {c.timeline.slice(-12).map((t, i) => (

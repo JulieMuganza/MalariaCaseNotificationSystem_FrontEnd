@@ -77,8 +77,8 @@ const roles = [
     i18n: 'sfr' as const,
     icon: MapPinnedIcon,
     path: '/sfr',
-    color: 'from-violet-700 to-violet-600',
-    hoverColor: 'hover:shadow-violet-200',
+    color: 'from-amber-700 to-orange-700',
+    hoverColor: 'hover:shadow-amber-200',
   },
   {
     key: 'Admin' as const,

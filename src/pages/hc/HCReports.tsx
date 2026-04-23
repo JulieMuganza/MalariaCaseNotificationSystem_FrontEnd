@@ -342,8 +342,8 @@ export function HCReports() {
           <h1 className={hcPage.title}>
             {isLocalClinic
               ? en
-                ? 'Local clinic reports'
-                : 'Raporo z’ivuriro rito'
+                ? 'Health Post reports'
+                : 'Raporo z’Ivuriro Riciriritse'
               : en
                 ? 'Health center reports'
                 : 'Raporo z’ikigo nderabuzima'}

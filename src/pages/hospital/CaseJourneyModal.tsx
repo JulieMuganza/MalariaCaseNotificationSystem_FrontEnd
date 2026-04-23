@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { XIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { MalariaCase } from '../../types/domain';
 
 const roleColors: Record<string, string> = {
@@ -20,6 +21,8 @@ export function CaseJourneyModal({
   onClose: () => void;
   title?: string;
 }) {
+  const { i18n } = useTranslation();
+  const en = i18n.language?.toLowerCase().startsWith('en');
   const open = Boolean(c);
 
   return (
@@ -43,7 +46,7 @@ export function CaseJourneyModal({
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">
-                  {title ?? 'Patient journey'}
+                  {title ?? (en ? 'Patient journey' : "Uruhererekane rw'umurwayi")}
                 </p>
                 <p className="truncate font-mono text-[11px] text-slate-500">{c.id}</p>
               </div>
@@ -51,7 +54,7 @@ export function CaseJourneyModal({
                 type="button"
                 onClick={onClose}
                 className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-                aria-label="Close"
+                aria-label={en ? 'Close' : 'Funga'}
               >
                 <XIcon size={18} />
               </button>

@@ -40,7 +40,7 @@ export function CHWCases() {
     Pending: en ? 'Pending' : 'Bitegereje',
     Referred: en ? 'Referred' : 'Byoherejwe',
     'HC Received': en ? 'HC received' : 'Byakiriwe ku kigonderabuzima',
-    Resolved: en ? 'Resolved' : 'Byakemutse',
+    Resolved: en ? 'Resolved' : 'Yasezerewe',
     Deceased: en ? 'Deceased' : 'Yitabye Imana',
   };
   const filtered = myCases.

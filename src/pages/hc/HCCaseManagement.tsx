@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronLeftIcon,
+  ChevronDownIcon,
   CheckCircleIcon,
   AlertTriangleIcon,
   ActivityIcon,
@@ -13,7 +14,12 @@ import {
   MapPinIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { HC_TRIAGE_SYMPTOMS, getSymptomLabel } from '../../data/mockData';
+import {
+  HC_TRIAGE_SYMPTOMS,
+  PEDIATRIC_DANGER_SIGNS,
+  PEDIATRIC_DANGER_SIGNS_PARENT,
+  getSymptomLabel,
+} from '../../data/mockData';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { useCasesApi } from '../../context/CasesContext';
 import { useAuth } from '../../context/AuthContext';
@@ -41,7 +47,7 @@ const TRANSPORT_OPTIONS: { value: HcTransport; en: string; rw: string }[] = [
   { value: 'Ambulance', en: 'Ambulance', rw: 'Imbangukiragutabara' },
 ];
 
-/** How the patient arrived at the health center (same options as former CHW field). */
+/** How the patient arrived at the first-line facility (same options as former CHW field). */
 const PATIENT_ARRIVAL_OPTIONS = [
   'Walk',
   'Bicycle',
@@ -50,6 +56,14 @@ const PATIENT_ARRIVAL_OPTIONS = [
 ] as const;
 const HC_TEST_OPTIONS = ['TDR', 'Blood stream'] as const;
 const PRE_TRANSFER_OPTIONS = ['Injectable', 'Pills', 'Out of stock'] as const;
+const PRE_TRANSFER_OPTION_LABELS: Record<
+  (typeof PRE_TRANSFER_OPTIONS)[number],
+  { en: string; rw: string }
+> = {
+  Injectable: { en: 'Injectable', rw: 'Urushinge' },
+  Pills: { en: 'Pills', rw: 'Ibinini' },
+  'Out of stock': { en: 'Out of stock', rw: 'Nta miti mu bubiko' },
+};
 
 /** MalariaSync HC pathway is severe malaria only — species fixed for national reporting context */
 const HC_MALARIA_SPECIES = 'Falciparum';
@@ -65,6 +79,8 @@ export function HCCaseManagement() {
   const { user } = useAuth();
   const base = useFirstLineBasePath();
   const isLocalClinic = user?.role === 'Local Clinic';
+  const facilityLabelEn = isLocalClinic ? 'Health Post' : 'Health Center';
+  const facilityLabelRw = isLocalClinic ? 'Ivuriro Riciriritse' : 'Ikigo Nderabuzima';
   const loadAttemptedForId = useRef<string | null>(null);
   const [fetchingCase, setFetchingCase] = useState(false);
   const [caseLoadReason, setCaseLoadReason] = useState<
@@ -114,6 +130,12 @@ export function HCCaseManagement() {
 
   const [weight, setWeight] = useState<number | ''>(c?.weight || '');
   const [triageSymptoms, setTriageSymptoms] = useState<string[]>([]);
+  const [showPediatricDangerSigns, setShowPediatricDangerSigns] = useState(false);
+  const hasPediatricDangerSignsSelected = triageSymptoms.some((s) =>
+    PEDIATRIC_DANGER_SIGNS.includes(
+      s as (typeof PEDIATRIC_DANGER_SIGNS)[number]
+    )
+  );
   const [testResult, setTestResult] = useState<'Positive' | 'Negative' | ''>(
     c?.severeMalariaTestResult || ''
   );
@@ -168,6 +190,16 @@ export function HCCaseManagement() {
     }
   }, [c?.id]);
 
+  useEffect(() => {
+    if (
+      triageSymptoms.some((s) =>
+        PEDIATRIC_DANGER_SIGNS.includes(s as (typeof PEDIATRIC_DANGER_SIGNS)[number])
+      )
+    ) {
+      setShowPediatricDangerSigns(true);
+    }
+  }, [triageSymptoms]);
+
   const suggestedDose = useMemo(() => {
     if (!weight || typeof weight !== 'number') return null;
     if (selectedDrug === 'Artesunate') {
@@ -188,6 +220,16 @@ export function HCCaseManagement() {
     }
     return [modeLine, ...doseLines];
   }, [preTransferType, treatmentLog]);
+
+  const coreTriageSymptoms = useMemo(
+    () =>
+      HC_TRIAGE_SYMPTOMS.filter(
+        (s) =>
+          s !== PEDIATRIC_DANGER_SIGNS_PARENT &&
+          !PEDIATRIC_DANGER_SIGNS.includes(s as (typeof PEDIATRIC_DANGER_SIGNS)[number])
+      ),
+    []
+  );
 
   if ((loading || fetchingCase) && !c) {
     return (
@@ -224,21 +266,25 @@ export function HCCaseManagement() {
     );
   }
 
-  const hcSymptomsPatch =
-    triageSymptoms.length > 0 ? { symptoms: triageSymptoms } : {};
+  const normalizedSymptoms =
+    triageSymptoms.length > 0
+      ? triageSymptoms
+      : c?.symptoms?.length
+        ? c.symptoms
+        : (c?.chwSymptoms ?? []);
+  const normalizedPreTransferLines =
+    preTransferLines.length > 0 ? preTransferLines : (c?.hcPreTreatment ?? []);
 
   const saveClinicalData = async (extraUpdate: Record<string, unknown> = {}) => {
     setSaving(true);
     try {
       await patchCase(c.id, {
-        ...(isLocalClinic
-          ? {}
-          : { severeMalariaTestResult: testResult || undefined }),
+        severeMalariaTestResult: testResult || undefined,
         plasmodiumSpecies: HC_MALARIA_SPECIES,
         testType: selectedTests.length ? selectedTests.join('; ') : undefined,
-        hcPreTreatment: preTransferLines,
+        hcPreTreatment: normalizedPreTransferLines,
         transportMode: arrivalTransport,
-        ...hcSymptomsPatch,
+        symptoms: normalizedSymptoms,
         ...extraUpdate,
       });
       toast.success(en ? 'Clinical record updated' : 'Amakuru yabitswe');
@@ -255,18 +301,24 @@ export function HCCaseManagement() {
 
   async function executeEscalationToDistrict() {
     setShowEscalate(false);
+    if (normalizedSymptoms.length === 0) {
+      toast.error(
+        en
+          ? 'Select at least one symptom before referring to district hospital.'
+          : "Hitamo nibura ikimenyetso kimwe mbere yo kohereza ku bitaro by'akarere."
+      );
+      return;
+    }
     setSaving(true);
     const now = new Date().toISOString();
     try {
       await patchCase(c.id, {
-        ...(isLocalClinic
-          ? {}
-          : { severeMalariaTestResult: testResult || undefined }),
+        severeMalariaTestResult: testResult || undefined,
         plasmodiumSpecies: HC_MALARIA_SPECIES,
         testType: selectedTests.length ? selectedTests.join('; ') : undefined,
-        hcPreTreatment: preTransferLines,
+        hcPreTreatment: normalizedPreTransferLines,
         transportMode: arrivalTransport,
-        ...hcSymptomsPatch,
+        symptoms: normalizedSymptoms,
         status: 'Escalated',
         hcPatientTransferredToHospitalDateTime: now,
         hcReferralToHospitalTransport: referralTransport,
@@ -274,10 +326,10 @@ export function HCCaseManagement() {
         timelineEvent: {
           event:
             isLocalClinic
-              ? 'Patient referred from local clinic to district hospital (pre-transfer treatment on record)'
+              ? 'Patient referred from health post to district hospital (pre-transfer treatment on record)'
               : 'Patient referred from health center to district hospital (pre-transfer treatment on record)',
-          actorName: user?.name ?? (isLocalClinic ? 'Local Clinic' : 'Health Center'),
-          actorRole: isLocalClinic ? 'Local Clinic' : 'Health Center',
+          actorName: user?.name ?? (isLocalClinic ? 'Health Post' : 'Health Center'),
+          actorRole: isLocalClinic ? 'Health Post' : 'Health Center',
         },
       });
       toast.success(
@@ -359,7 +411,7 @@ export function HCCaseManagement() {
                       : 'Ubutumwa bw’Umujyanama'
                     : en
                       ? 'Direct patient intake'
-                      : 'Umurwayi wakiriwe ku kigo nderabuzima'}
+                      : `Umurwayi wakiriwe kuri ${facilityLabelRw.toLowerCase()}`}
                 </h2>
               </div>
               {wasReferredByChw && c.chwRapidTestResult ? (
@@ -394,8 +446,8 @@ export function HCCaseManagement() {
                       ? 'No severe symptoms were recorded by the CHW on this referral.'
                       : 'Nta bimenyetso by’ikarire byanditswe na CHW.'
                     : en
-                      ? 'This patient was registered directly at the health center.'
-                      : 'Uyu murwayi yanditswe ku kigo nderabuzima aturutse iwe.'}
+                      ? `This patient was registered directly at the ${facilityLabelEn.toLowerCase()}.`
+                      : `Uyu murwayi yanditswe kuri ${facilityLabelRw.toLowerCase()} aturutse iwe.`}
                 </p>
               )}
             </section>
@@ -410,8 +462,8 @@ export function HCCaseManagement() {
             </div>
             <p className="mb-4 text-xs text-gray-500">
               {en
-                ? 'How did the patient reach the health center?'
-                : 'Umurwayi yageze ate ku kigonderabuzima?'}
+                ? `How did the patient reach the ${facilityLabelEn.toLowerCase()}?`
+                : `Umurwayi yageze ate kuri ${facilityLabelRw.toLowerCase()}?`}
             </p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {PATIENT_ARRIVAL_OPTIONS.map((opt) => (
@@ -440,7 +492,7 @@ export function HCCaseManagement() {
                    <h2 className={sectionTitleClass}>{en ? 'Clinical Triage' : 'Gushungura'}</h2>
                 </div>
                 <div className="grid grid-cols-1 gap-2 max-h-[440px] overflow-y-auto pr-2 custom-scrollbar">
-                   {HC_TRIAGE_SYMPTOMS.map(s => (
+                   {coreTriageSymptoms.map(s => (
                      <label 
                        key={s} 
                        className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${triageSymptoms.includes(s) ? 'bg-[color:var(--role-accent-soft)] border-[color:var(--role-accent)]/20' : 'bg-white border-gray-50 hover:bg-gray-50'}`}
@@ -456,12 +508,58 @@ export function HCCaseManagement() {
                        />
                      </label>
                    ))}
+                   <button
+                     type="button"
+                     onClick={() =>
+                       setShowPediatricDangerSigns((prev) => !prev)
+                     }
+                     className={`flex items-center justify-between p-3.5 rounded-xl border transition-all text-left ${
+                       showPediatricDangerSigns || hasPediatricDangerSignsSelected
+                         ? 'bg-[color:var(--role-accent-soft)] border-[color:var(--role-accent)]/20 text-[color:var(--role-accent)]'
+                         : 'bg-white border-gray-50 text-gray-700 hover:bg-gray-50'
+                     }`}
+                   >
+                     <span className="text-xs font-bold">
+                       {getSymptomLabel(PEDIATRIC_DANGER_SIGNS_PARENT, language)}
+                     </span>
+                     <ChevronDownIcon
+                       size={14}
+                       className={`transition-transform ${
+                         showPediatricDangerSigns ? 'rotate-180' : ''
+                       }`}
+                     />
+                   </button>
                 </div>
+                {showPediatricDangerSigns && (
+                  <div className="mt-2 grid grid-cols-1 gap-2">
+                    {PEDIATRIC_DANGER_SIGNS.map((s) => (
+                      <label
+                        key={s}
+                        className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${triageSymptoms.includes(s) ? 'bg-[color:var(--role-accent-soft)] border-[color:var(--role-accent)]/20' : 'bg-white border-gray-50 hover:bg-gray-50'}`}
+                      >
+                        <span className={`text-xs font-bold ${triageSymptoms.includes(s) ? 'text-[color:var(--role-accent)]' : 'text-gray-600'}`}>
+                          {getSymptomLabel(s, language)}
+                        </span>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-[color:var(--role-accent)] focus:ring-[color:var(--role-accent)]/30"
+                          checked={triageSymptoms.includes(s)}
+                          onChange={() =>
+                            setTriageSymptoms((prev) =>
+                              prev.includes(s)
+                                ? prev.filter((x) => x !== s)
+                                : [...prev, s]
+                            )
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                )}
              </section>
 
-             {/* Diagnostic (health center only) + assessment */}
+             {/* Diagnostic + assessment */}
              <div className="space-y-8">
-                {!isLocalClinic && (
                 <section className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
                    <div className={sectionHeaderClass}>
                       <ActivityIcon size={16} className="text-[color:var(--role-accent)]" />
@@ -513,7 +611,6 @@ export function HCCaseManagement() {
                       </div>
                    </div>
                 </section>
-                )}
 
                 <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
                    <div className={sectionHeaderClass}>
@@ -541,7 +638,7 @@ export function HCCaseManagement() {
           <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
              <div className={sectionHeaderClass}>
                 <ClockIcon size={16} className="text-[color:var(--role-accent)]" />
-                <h2 className={sectionTitleClass}>{en ? 'Treatment History' : 'Ububiko bw\'inyongera'}</h2>
+                <h2 className={sectionTitleClass}>{en ? 'Treatment History' : 'Ubuvuzi bw\'ibanze'}</h2>
              </div>
              
              <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-10">
@@ -606,11 +703,6 @@ export function HCCaseManagement() {
                       <h4 className="mb-1 text-sm font-semibold text-gray-900">
                         {en ? 'Pre-transfer referral' : 'Kohereza mbere'}
                       </h4>
-                      <p className="mb-4 text-xs text-gray-500 leading-relaxed">
-                        {en
-                          ? 'After pre-transfer treatment, refer to the district hospital. Choose how the patient will travel.'
-                          : "Nyuma y'ubuvuzi bw'ibanze, hitamo uburyo bwo kohereza ku bitaro by'akarere."}
-                      </p>
 
                       <p className="mb-2 text-xs font-medium text-gray-600">
                         {en ? 'Pre-transfer treatment mode' : "Uburyo bw'ubuvuzi mbere yo kohereza"}
@@ -632,7 +724,7 @@ export function HCCaseManagement() {
                               checked={preTransferType === opt}
                               onChange={() => setPreTransferType(opt)}
                             />
-                            <span>{opt}</span>
+                            <span>{en ? PRE_TRANSFER_OPTION_LABELS[opt].en : PRE_TRANSFER_OPTION_LABELS[opt].rw}</span>
                           </label>
                         ))}
                       </div>
@@ -712,13 +804,13 @@ export function HCCaseManagement() {
         open={showEscalate}
         onClose={() => setShowEscalate(false)}
         onConfirm={executeEscalationToDistrict}
-        title={en ? 'Escalate to district hospital?' : 'Kohereza ku bitaro by\'akarere?'}
+        title={en ? 'Refer now?' : 'Ohereza ubu?'}
         message={
           en
-            ? `Sets transfer time, logs pre-treatment for continuity, and records transport as "${referralTransport}". District hospital and RICH are notified per protocol.`
-            : `Ibi birashyiraho igihe cyo kohereza, bibike ubuvuzi bwabanje, kandi bibike uko umurwayi yageze nka "${referralTransport}". Ibitaro by'akarere na RICH biramenyeshwa.`
+            ? 'District hospital will receive this case now.'
+            : "Ibitaro by'akarere birahita byakira iyi dosiye."
         }
-        confirmText={en ? 'Confirm referral' : 'Emeza kohereza'}
+        confirmText={en ? 'Send' : 'Ohereza'}
         confirmColor="amber"
       />
 

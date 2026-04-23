@@ -67,7 +67,7 @@ export function StatusBadge({ status }: {status: CaseStatus;}) {
     Admitted: en ? 'Admitted' : 'Byakiriwe mu bitaro',
     Treated: en ? 'Treated' : 'Yazamuwe',
     Discharged: en ? 'Discharged' : 'Yasezerewe',
-    Resolved: en ? 'Resolved' : 'Byakemutse',
+    Resolved: en ? 'Resolved' : 'Yasezerewe',
     Deceased: en ? 'Deceased' : 'Yitabye Imana',
   };
   const label = labels[normalized] ?? normalized;

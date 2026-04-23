@@ -75,8 +75,8 @@ export function HCDashboard() {
   const hcRole =
     base === '/lc'
       ? en
-        ? 'Local Clinic'
-        : 'Ikigo Nderabuzima Gito'
+        ? 'Health Post'
+        : 'Ivuriro Riciriritse'
       : en
         ? 'Health Center'
         : 'Ikigo Nderabuzima';
@@ -140,7 +140,9 @@ export function HCDashboard() {
 
   const hcNotificationsList = useMemo(() => {
     return notifications
-      .filter((n) => n.targetRole === 'Health Center')
+      .filter((n) =>
+        base === '/lc' ? n.targetRole === 'Local Clinic' : n.targetRole === 'Health Center'
+      )
       .sort(
         (a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()

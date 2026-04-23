@@ -311,7 +311,16 @@ export const OCCUPATIONS = [
   'Other',
 ] as const;
 
-export const SEVERE_SYMPTOMS = [
+export const PEDIATRIC_DANGER_SIGNS = [
+  'Inability to drink or suckle',
+  'Vomiting everything',
+  'Convulsions (at least 2 in 24 hours)',
+  'Lethargy and unconsciousness',
+] as const;
+
+export const PEDIATRIC_DANGER_SIGNS_PARENT = 'Pediatric Danger Signs' as const;
+
+const BASE_SEVERE_SYMPTOMS = [
   'Acidosis',
   'Hypoglycemia',
   'Severe malaria anemia',
@@ -321,9 +330,14 @@ export const SEVERE_SYMPTOMS = [
   'Significant bleeding',
   'Shock',
   'Hyperparasitaemia',
-  'Pediatric Danger Signs',
   'Impaired Consciousness',
   'Prostration',
+] as const;
+
+export const SEVERE_SYMPTOMS = [
+  ...BASE_SEVERE_SYMPTOMS,
+  PEDIATRIC_DANGER_SIGNS_PARENT,
+  ...PEDIATRIC_DANGER_SIGNS,
 ] as const;
 
 export const HC_TRIAGE_SYMPTOMS = [
@@ -341,6 +355,10 @@ export const SYMPTOM_LABELS_RW: Record<string, string> = {
   Shock: 'Shoke',
   Hyperparasitaemia: 'Udukoko twinshi cyane mu maraso',
   'Pediatric Danger Signs': 'Ibimenyetso mpuruza ku abana',
+  'Inability to drink or suckle': 'Kunanirwa kunywa, konka',
+  'Vomiting everything': 'Kuruka burikintu cyose',
+  'Convulsions (at least 2 in 24 hours)': 'Kugagara (byibuze mu masaha 24)',
+  'Lethargy and unconsciousness': 'Gucika intege cyane, gutakaza ubwenge',
   'Impaired Consciousness': 'Gutakaza ubwenge',
   Prostration: 'Kunanirwa kwicara no guhagarara',
 };

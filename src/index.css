@@ -77,8 +77,8 @@
 }
 
 [data-app-role='sfr'] {
-  --role-accent: #7c3aed;
-  --role-accent-soft: rgb(124 58 237 / 0.14);
+  --role-accent: #b45309;
+  --role-accent-soft: rgb(180 83 9 / 0.1);
 }
 
 [data-app-role='admin'] {

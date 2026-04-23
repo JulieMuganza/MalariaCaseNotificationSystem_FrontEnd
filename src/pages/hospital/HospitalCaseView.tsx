@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronLeftIcon,
+  ChevronDownIcon,
   InfoIcon,
   ArrowUpRightIcon,
   Stethoscope,
@@ -16,10 +17,19 @@ import type { MalariaCase } from '../../types/domain';
 import { ReferralHospitalCaseOverview } from './ReferralHospitalCaseOverview';
 import { mergedSymptoms } from './caseHelpers';
 import { DhNoPreTransferTreatmentModal } from './DhNoPreTransferTreatmentModal';
+import {
+  PEDIATRIC_DANGER_SIGNS,
+  PEDIATRIC_DANGER_SIGNS_PARENT,
+  SEVERE_SYMPTOMS,
+  getSymptomLabel,
+} from '../../data/mockData';
+import { useTranslation } from 'react-i18next';
 
 type HospitalTab = 'pathway' | 'overview' | 'record';
 
 export function HospitalCaseView() {
+  const { i18n } = useTranslation();
+  const en = !i18n.language.startsWith('rw');
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -100,7 +110,9 @@ export function HospitalCaseView() {
 
   if (!c && !caseLoadFinished) {
     return (
-      <div className="py-12 text-center text-sm text-gray-500">Loading…</div>
+      <div className="py-12 text-center text-sm text-gray-500">
+        {en ? 'Loading…' : 'Birimo gutegurwa…'}
+      </div>
     );
   }
   if (!c) {
@@ -108,14 +120,22 @@ export function HospitalCaseView() {
       return (
         <div className="mx-auto max-w-lg space-y-3 py-12 text-center">
           <p className="text-sm font-semibold text-gray-900">
-            You can’t open this case from here
+            {en
+              ? 'You can’t open this case from here'
+              : 'Ntidushobora gufungura iyi dosiye hano'}
           </p>
           <p className="text-sm text-gray-600">
             {user?.role === 'District Hospital' ?
-              'If this case was transferred to a referral / provincial hospital, open it from the referral hospital portal, or check that your account district matches the case.'
+              (en
+                ? 'If this case was transferred to a referral / provincial hospital, open it from the referral hospital portal, or check that your account district matches the case.'
+                : "Niba iyi dosiye yaroherejwe ku bitaro byoherezwaho, yifungurire muri portal yabyo cyangwa urebe niba akarere kari kuri konti kawe gahura n aka dosiye.")
             : user?.role === 'Referral Hospital' ?
-              'The case may not be transferred to your facility yet, or it may belong to another district.'
-            : 'Access to this record was denied.'}
+              (en
+                ? 'The case may not be transferred to your facility yet, or it may belong to another district.'
+                : 'Iyi dosiye ishobora kuba itaragera ku kigo cyawe cyangwa ikaba ari iyakandi karere.')
+            : (en
+                ? 'Access to this record was denied.'
+                : 'Nta burenganzira bwo gufungura iyi dosiye.')}
           </p>
           <button
             type="button"
@@ -127,7 +147,7 @@ export function HospitalCaseView() {
               )
             }
             className="text-sm font-medium text-[color:var(--role-accent)] underline">
-            Back to list
+            {en ? 'Back to list' : 'Subira kuri lisiti'}
           </button>
         </div>
       );
@@ -135,8 +155,10 @@ export function HospitalCaseView() {
     return (
       <div className="py-12 text-center text-sm text-gray-500">
         {caseLoadReason === 'not_found' ?
-          'Case not found'
-        : 'Could not load this case. Try again from the case list.'}
+          (en ? 'Case not found' : 'Dosiye ntiyabonetse')
+        : (en
+            ? 'Could not load this case. Try again from the case list.'
+            : 'Ntibyashobotse gufungura iyi dosiye. Ongera ugerageze uhereye kuri lisiti.')}
       </div>
     );
   }
@@ -151,16 +173,38 @@ export function HospitalCaseView() {
   const backListPath =
     isDH ? `${base}/triage` : `${base}/cases`;
   const mergedForRecord = mergedSymptoms(c);
+  const firstLineFacilityEn =
+    c.chwPrimaryReferral === 'LOCAL_CLINIC' ? 'Health Post' : 'Health Center';
+  const firstLineFacilityRw =
+    c.chwPrimaryReferral === 'LOCAL_CLINIC'
+      ? 'Ivuriro Riciriritse'
+      : 'Ikigonderabuzima';
 
   const tabs: { id: HospitalTab; label: string; icon: typeof Stethoscope }[] =
     showDhPathway ?
       [
-        { id: 'pathway', label: 'Clinical pathway', icon: Stethoscope },
-        { id: 'record', label: 'Patient record', icon: UserCircle2 },
+        {
+          id: 'pathway',
+          label: en ? 'Clinical pathway' : "Inzira y'ubuvuzi",
+          icon: Stethoscope,
+        },
+        {
+          id: 'record',
+          label: en ? 'Patient record' : "Dosiye y'umurwayi",
+          icon: UserCircle2,
+        },
       ]
     : isReferral ?
-      [{ id: 'overview', label: 'Overview', icon: Stethoscope }]
-    : [{ id: 'record', label: 'Patient record', icon: UserCircle2 }];
+      [{
+        id: 'overview',
+        label: en ? 'Overview' : 'Incamake',
+        icon: Stethoscope,
+      }]
+    : [{
+        id: 'record',
+        label: en ? 'Patient record' : "Dosiye y'umurwayi",
+        icon: UserCircle2,
+      }];
 
   const showTabStrip = tabs.length > 1;
 
@@ -170,13 +214,13 @@ export function HospitalCaseView() {
         type="button"
         onClick={() => navigate(backListPath)}
         className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900">
-        <ChevronLeftIcon size={16} /> Back to list
+        <ChevronLeftIcon size={16} /> {en ? 'Back to list' : 'Subira kuri lisiti'}
       </button>
 
       <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Case file
+            {en ? 'Case file' : "Dosiye y'urubanza"}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
             {c.patientName}
@@ -254,63 +298,85 @@ export function HospitalCaseView() {
         <div className="space-y-4">
           {isDH && c.transferredToReferralHospital && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-              <strong>Transferred to referral hospital.</strong> This patient left district hospital care; the record
-              below is kept for continuity. Editing here is disabled — use referral hospital for ongoing care.
+              <strong>
+                {en
+                  ? 'Transferred to referral hospital.'
+                  : "Yoherejwe ku bitaro byoherezwaho."}
+              </strong>{' '}
+              {en
+                ? 'This patient left district hospital care; the record below is kept for continuity.'
+                : "Uyu murwayi yavuye ku bitaro by'akarere; amakuru ari hasi agumyeho ku bw'ubukurikirane. Guhindura hano byahagaritswe — koresha ibitaro byoherezwaho ku buvuzi bukomeje."}
             </div>
           )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <SummaryCard
-              title="Demographics"
+              title={en ? 'Demographics' : "Imyirondoro y'umurwayi"}
               items={[
-                ['Sex / Age', `${c.sex}, ${c.age}y (${c.ageGroup})`],
-                ['Location', `${c.village}, ${c.sector}, ${c.district}`],
                 [
-                  'Insurance',
+                  en ? 'Sex / Age' : 'Igitsina / Imyaka',
+                  `${c.sex}, ${c.age}y (${c.ageGroup})`,
+                ],
+                [en ? 'Location' : 'Aho abarizwa', `${c.village}, ${c.sector}, ${c.district}`],
+                [
+                  en ? 'Insurance' : 'Ubwishingizi',
                   c.hasInsurance ? c.insuranceType || 'Yes' : 'No',
                 ],
               ]}
             />
             <SummaryCard
-              title="Disease history"
+              title={en ? 'Disease history' : "Amakuru y'uburwayi"}
               items={isSurveillancePartner ?
                 [
                   [
-                    'First symptom (from CHW)',
+                    en ? 'First symptom (from CHW)' : 'Ikimenyetso cya mbere (kivuye kuri CHW)',
                     new Date(c.dateFirstSymptom).toLocaleDateString(),
                   ],
                   [
-                    'CHW -> HC transfer time',
+                    en
+                      ? `CHW -> ${firstLineFacilityEn} transfer time`
+                      : `Igihe CHW yamwoherereje kuri ${firstLineFacilityRw}`,
                     c.chwTransferDateTime ?
                       new Date(c.chwTransferDateTime).toLocaleString()
-                    : 'Not recorded',
+                    : (en ? 'Not recorded' : 'Ntibyanditswe'),
                   ],
                   [
-                    'HC -> District transfer time',
+                    en
+                      ? `${firstLineFacilityEn} -> District transfer time`
+                      : `Igihe ${firstLineFacilityRw} yamwoherereje ku bitaro by'akarere`,
                     c.hcPatientTransferredToHospitalDateTime ?
                       new Date(c.hcPatientTransferredToHospitalDateTime).toLocaleString()
-                    : 'Not recorded',
+                    : (en ? 'Not recorded' : 'Ntibyanditswe'),
                   ],
                   [
-                    'Treatment received (CHW/HC)',
+                    en
+                      ? `Treatment received (CHW/${firstLineFacilityEn})`
+                      : `Umuti watanzwe (CHW/${firstLineFacilityRw})`,
                     c.hcPreTreatment?.length ?
                       c.hcPreTreatment.join(', ')
-                    : 'Not recorded',
+                    : (en ? 'Not recorded' : 'Ntibyanditswe'),
                   ],
                 ]
               : [
                   [
-                    'First symptom',
+                    en ? 'First symptom' : 'Ikimenyetso cya mbere',
                     new Date(c.dateFirstSymptom).toLocaleDateString(),
                   ],
-                  ['Time to care', c.timeToSeekCare],
-                  ['Distance to HC', c.distanceToHC],
+                  [en ? 'Time to care' : "Igihe cyafashwe ngo agere ku buvuzi", c.timeToSeekCare],
+                  [
+                    en ? `Distance to ${firstLineFacilityEn}` : `Intera igana kuri ${firstLineFacilityRw}`,
+                    c.distanceToHC,
+                  ],
                 ]}
             />
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-900">Symptoms</h3>
+            <h3 className="text-sm font-bold text-slate-900">
+              {en ? 'Symptoms' : 'Ibimenyetso'}
+            </h3>
             <p className="mt-1 text-xs text-slate-500">
-              Combined from CHW referral, health center record, and triage (de-duplicated).
+              {en
+                ? 'Combined from CHW referral, health center record, and triage (de-duplicated).'
+                : "Byahujwe bivuye kuri CHW, ku kigonderabuzima no kuri triage (byakurwamo ibisubirwamo)."}
             </p>
             {mergedForRecord.length > 0 ? (
               <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-slate-800">
@@ -319,23 +385,35 @@ export function HospitalCaseView() {
                 ))}
               </ul>
             ) : (
-              <p className="mt-3 text-sm text-slate-500">Not recorded</p>
+              <p className="mt-3 text-sm text-slate-500">
+                {en ? 'Not recorded' : 'Ntibyanditswe'}
+              </p>
             )}
             <div className="mt-4 flex flex-wrap gap-4 border-t border-slate-100 pt-4 text-sm">
               <div>
-                <span className="text-slate-500">Symptom count (HC record)</span>
+                <span className="text-slate-500">
+                  {en
+                    ? `Symptom count (${firstLineFacilityEn} record)`
+                    : `Umubare w'ibimenyetso (inyandiko za ${firstLineFacilityRw})`}
+                </span>
                 <p className="font-semibold text-slate-900">{c.symptomCount}</p>
               </div>
               <div>
-                <span className="text-slate-500">CHW rapid test</span>
+                <span className="text-slate-500">
+                  {en ? 'CHW rapid test' : 'Ikizamini cya CHW'}
+                </span>
                 <p className="font-semibold text-slate-900">
                   {c.chwRapidTestResult ?? '—'}
                 </p>
               </div>
               <div>
-                <span className="text-slate-500">HC severe malaria test</span>
+                <span className="text-slate-500">
+                  {en
+                    ? `${firstLineFacilityEn} severe malaria test`
+                    : `Ikizamini cya malaria y'igikatu cya ${firstLineFacilityRw}`}
+                </span>
                 <p className="font-semibold text-slate-900">
-                  {c.severeMalariaTestResult ?? 'Not recorded'}
+                  {c.severeMalariaTestResult ?? (en ? 'Not recorded' : 'Ntibyanditswe')}
                 </p>
               </div>
             </div>
@@ -350,30 +428,39 @@ export function HospitalCaseView() {
 }
 
 function HospitalAssessmentPanel({ c }: { c: MalariaCase }) {
+  const { i18n } = useTranslation();
+  const en = !i18n.language.startsWith('rw');
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
       <h3 className="text-sm font-bold text-slate-900">
-        Clinical summary & hospital record
+        {en
+          ? 'Clinical summary & hospital record'
+          : "Incamake y'ubuvuzi n'inyandiko z'ibitaro"}
       </h3>
       <p className="text-xs text-slate-500">
-        Read-only summary; pathway actions are above. Severe malaria test and
-        outcomes feed surveillance notifications automatically.
+        {en
+          ? 'Read-only summary; pathway actions are above. Severe malaria test and outcomes feed surveillance notifications automatically.'
+          : "Iyi ni incamake isomwa gusa; ibikorwa by'inzira y'ubuvuzi biri hejuru. Ibisubizo by'ikizamini n'ingaruka byoherezwa mu menyesha ry'igenzura."}
       </p>
       <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
         <div>
-          <span className="text-slate-500">Severe malaria test</span>
+          <span className="text-slate-500">
+            {en ? 'Severe malaria test' : "Ikizamini cya malaria y'igikatu"}
+          </span>
           <p className="mt-1 font-semibold text-slate-900">
             {c.severeMalariaTestResult || '—'}
           </p>
         </div>
         <div>
-          <span className="text-slate-500">Outcome</span>
+          <span className="text-slate-500">{en ? 'Outcome' : 'Ibyavuyemo'}</span>
           <p className="mt-1 font-semibold text-slate-900">
             {c.finalOutcomeHospital || c.outcome || '—'}
           </p>
         </div>
         <div>
-          <span className="text-slate-500">Hospital received patient</span>
+          <span className="text-slate-500">
+            {en ? 'Hospital received patient' : 'Umurwayi yakiriwe ku bitaro'}
+          </span>
           <p className="mt-1 font-medium text-slate-900">
             {c.hospitalReceivedDateTime ?
               new Date(c.hospitalReceivedDateTime).toLocaleString()
@@ -381,7 +468,7 @@ function HospitalAssessmentPanel({ c }: { c: MalariaCase }) {
           </p>
         </div>
         <div>
-          <span className="text-slate-500">Discharge</span>
+          <span className="text-slate-500">{en ? 'Discharge' : 'Gusezererwa'}</span>
           <p className="mt-1 font-medium text-slate-900">
             {c.hospitalDischargeDateTime ?
               new Date(c.hospitalDischargeDateTime).toLocaleString()
@@ -391,16 +478,21 @@ function HospitalAssessmentPanel({ c }: { c: MalariaCase }) {
       </div>
       {c.severeMalariaTestResult === 'Positive' && c.hospitalManagementMedication && (
         <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-3 text-xs text-amber-950">
-          <strong>Management / medicines</strong> (full detail for RICH; partial
-          for HC/CHW in notifications): {c.hospitalManagementMedication}
+          <strong>{en ? 'Management / medicines' : 'Ubuvuzi / imiti'}</strong>{' '}
+          {en
+            ? '(full detail for RICH; partial for HC/CHW in notifications):'
+            : '(amakuru yuzuye kuri RICH; make kuri HC/CHW mu menyesha):'}{' '}
+          {c.hospitalManagementMedication}
         </div>
       )}
       {c.phaseRetourEligible && (
         <p className="flex items-start gap-2 rounded-xl bg-[#6930c3]/10 px-3 py-2 text-xs text-[#4a148c]">
           <InfoIcon size={14} className="mt-0.5 shrink-0" />
           <span>
-            <strong>Phase retour:</strong> when criteria are met, HC and CHW
-            receive a partial update; RICH receives the full record.
+            <strong>Phase retour:</strong>{' '}
+            {en
+              ? 'when criteria are met, HC and CHW receive a partial update; RICH receives the full record.'
+              : 'iyo ibisabwa byujujwe, HC na CHW bahabwa amakuru make; RICH ihabwa dosiye yuzuye.'}
           </span>
         </p>
       )}
@@ -440,6 +532,9 @@ function DistrictHospitalPathway({
   setObsDays: (v: number) => void;
   listPath: string;
 }) {
+  const { i18n } = useTranslation();
+  const language: 'en' | 'rw' = i18n.language.startsWith('rw') ? 'rw' : 'en';
+  const en = language === 'en';
   const navigate = useNavigate();
   const clinicalStorageKey = `dh-clinical-course-${c.id}`;
   const [clinicalCourse, setClinicalCourse] = useState<
@@ -468,10 +563,42 @@ function DistrictHospitalPathway({
     '' | 'Self' | 'With relative' | 'Ambulance'
   >(() => c.dhReferralToReferralHospitalTransport ?? '');
   const [dhArtModalOpen, setDhArtModalOpen] = useState(false);
+  const [districtSymptoms, setDistrictSymptoms] = useState<string[]>(
+    c.symptoms ?? []
+  );
+  const [showPediatricDangerSigns, setShowPediatricDangerSigns] = useState(false);
 
   useEffect(() => {
     setReferralTransport(c.dhReferralToReferralHospitalTransport ?? '');
   }, [c.id, c.dhReferralToReferralHospitalTransport]);
+
+  useEffect(() => {
+    setDistrictSymptoms(c.symptoms ?? []);
+  }, [c.id, c.symptoms]);
+
+  useEffect(() => {
+    if (
+      districtSymptoms.some((s) =>
+        PEDIATRIC_DANGER_SIGNS.includes(
+          s as (typeof PEDIATRIC_DANGER_SIGNS)[number]
+        )
+      )
+    ) {
+      setShowPediatricDangerSigns(true);
+    }
+  }, [districtSymptoms]);
+
+  const coreDistrictSymptoms = useMemo(
+    () =>
+      SEVERE_SYMPTOMS.filter(
+        (s) =>
+          s !== PEDIATRIC_DANGER_SIGNS_PARENT &&
+          !PEDIATRIC_DANGER_SIGNS.includes(
+            s as (typeof PEDIATRIC_DANGER_SIGNS)[number]
+          )
+      ),
+    []
+  );
 
   useEffect(() => {
     try {
@@ -500,6 +627,7 @@ function DistrictHospitalPathway({
 
   const hcLines = c.hcPreTreatment?.length ? c.hcPreTreatment : [];
   const symptomLines = mergedSymptoms(c);
+  const fromHealthPost = c.chwPrimaryReferral === 'LOCAL_CLINIC';
   const received = Boolean(c.hospitalReceivedDateTime);
   const pre = c.dhHcPreTransferReceived;
   const obsStarted = Boolean(c.dhObservationStartedAt);
@@ -531,95 +659,24 @@ function DistrictHospitalPathway({
             hcPreTreatment: lines,
             timelineEvent: {
               event:
-                'DH pre-transfer treatment recorded (no HC handoff — weight & anti-malarial dosing)',
+                'DH treatment recorded (no HC treatment made — weight and anti-malarial dosing captured)',
               actorName: userName ?? 'District Hospital',
               actorRole: 'District Hospital',
             },
           });
-          toast.success('Pre-transfer treatment at DH saved');
+          toast.success('Treatment at DH saved');
         }}
       />
-      <div className="rounded-2xl border border-[color:var(--role-accent)]/25 bg-[color:var(--role-accent-soft)] p-6 shadow-sm">
-        <h3 className="text-base font-semibold text-[color:var(--role-accent)]">
-          Severe malaria — district hospital pathway
-        </h3>
-      </div>
-
-      {/* Health center handoff — compact: meta left, symptoms right */}
-      <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4 shadow-sm">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-800">
-          Health center handoff
-        </p>
-        <div className="mt-3 grid gap-4 text-sm text-slate-800 md:grid-cols-2 md:items-start">
-          <div className="space-y-3 md:pr-2">
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                HC severe malaria test
-              </span>
-              <p className="mt-0.5 text-sm font-medium leading-snug">
-                {c.severeMalariaTestResult ?? 'Not recorded'}
-              </p>
-            </div>
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                Means of transport
-              </span>
-              <p className="mt-0.5 text-[11px] text-slate-600">
-                How the patient came from the health center to this district
-                hospital.
-              </p>
-              <p className="mt-1 text-sm font-medium leading-snug">
-                {c.hcReferralToHospitalTransport ?? '—'}
-              </p>
-            </div>
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                Transferred toward this hospital
-              </span>
-              <p className="mt-0.5 text-sm font-medium leading-snug">
-                {c.hcPatientTransferredToHospitalDateTime ?
-                  new Date(
-                    c.hcPatientTransferredToHospitalDateTime
-                  ).toLocaleString()
-                : '—'}
-              </p>
-            </div>
-            <div>
-              <span className="text-[10px] font-semibold text-slate-600">
-                Pre-transfer treatment at HC
-              </span>
-              {hcLines.length > 0 ?
-                <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs text-slate-800">
-                  {hcLines.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-              : <p className="mt-1 text-xs text-slate-600">—</p>}
-            </div>
-          </div>
-          <div className="rounded-lg border border-blue-100/80 bg-white/70 p-3 md:min-h-[120px]">
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-              Symptoms
-            </span>
-            {symptomLines.length > 0 ?
-              <ul className="mt-2 max-h-52 list-inside list-disc space-y-0.5 overflow-y-auto text-xs leading-relaxed">
-                {symptomLines.map((s) => (
-                  <li key={s}>{s}</li>
-                ))}
-              </ul>
-            : <p className="mt-2 text-xs text-slate-600">—</p>}
-          </div>
-        </div>
-      </div>
-
       {/* Reception */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          Reception
+          {en ? 'Reception' : 'Kwakira umurwayi'}
         </p>
         {received ?
           <p className="mt-3 text-sm text-slate-800">
-            <span className="font-medium text-slate-600">Received at hospital:</span>{' '}
+            <span className="font-medium text-slate-600">
+              {en ? 'Received at hospital:' : "Yakiriwe ku bitaro:"}
+            </span>{' '}
             {new Date(c.hospitalReceivedDateTime!).toLocaleString()}
           </p>
         : <div className="mt-4">
@@ -639,10 +696,14 @@ function DistrictHospitalPathway({
                         actorRole: 'District Hospital',
                       },
                     });
-                    toast.success('Recorded');
+                    toast.success(en ? 'Recorded' : 'Byanditswe');
                   } catch (e) {
                     toast.error(
-                      e instanceof Error ? e.message : 'Could not save'
+                      e instanceof Error
+                        ? e.message
+                        : en
+                          ? 'Could not save'
+                          : 'Ntibyabashije kubikwa'
                     );
                   } finally {
                     setLoggingArrival(false);
@@ -651,16 +712,106 @@ function DistrictHospitalPathway({
               }
               className="shrink-0 rounded-xl bg-[color:var(--role-accent)] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-50"
             >
-              {loggingArrival ? 'Saving…' : 'We received the patient'}
+              {loggingArrival
+                ? (en ? 'Saving…' : 'Birabikwa…')
+                : (en ? 'We received the patient' : 'Twakiriye umurwayi')}
             </button>
           </div>
         }
       </div>
 
+      {/* First-line facility handoff — compact: meta left, symptoms right */}
+      <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4 shadow-sm">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-800">
+          {fromHealthPost
+            ? (en ? 'Health Post handoff' : "Ibyatanzwe n'Ivuriro Riciriritse")
+            : (en ? 'Health center handoff' : "Ibyatanzwe n'ikigo nderabuzima")}
+        </p>
+        <div className="mt-3 grid gap-4 text-sm text-slate-800 md:grid-cols-2 md:items-start">
+          <div className="space-y-3 md:pr-2">
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                {fromHealthPost
+                  ? (en
+                      ? 'Health Post severe malaria test'
+                      : "Ikizamini cya malaria y'igikatu ku Ivuriro Riciriritse")
+                  : (en
+                      ? 'HC severe malaria test'
+                      : "Ikizamini cya malaria y'igikatu ku kigonderabuzima")}
+              </span>
+              <p className="mt-0.5 text-sm font-medium leading-snug">
+                {c.severeMalariaTestResult ?? (en ? 'Not recorded' : 'Ntibyanditswe')}
+              </p>
+            </div>
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                {en ? 'Means of transport' : 'Uburyo bwo gutwara umurwayi'}
+              </span>
+              <p className="mt-0.5 text-[11px] text-slate-600">
+                {en
+                  ? `How the patient came from the ${
+                      fromHealthPost ? 'health post' : 'health center'
+                    } to this district hospital.`
+                  : `Uko umurwayi yageze hano avuye kuri ${
+                      fromHealthPost ? 'Ivuriro Riciriritse' : 'kigonderabuzima'
+                    }.`}
+              </p>
+              <p className="mt-1 text-sm font-medium leading-snug">
+                {c.hcReferralToHospitalTransport ?? '—'}
+              </p>
+            </div>
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                {en ? 'Transferred toward this hospital' : 'Yoherejwe ku bitaro'}
+              </span>
+              <p className="mt-0.5 text-sm font-medium leading-snug">
+                {c.hcPatientTransferredToHospitalDateTime ?
+                  new Date(
+                    c.hcPatientTransferredToHospitalDateTime
+                  ).toLocaleString()
+                : '—'}
+              </p>
+            </div>
+            <div>
+              <span className="text-[10px] font-semibold text-slate-600">
+                {fromHealthPost
+                  ? (en
+                      ? 'Pre-transfer treatment at Health Post'
+                      : "Umuti watangiwe ku Ivuriro Riciriritse")
+                  : (en
+                      ? 'Pre-transfer treatment at HC'
+                      : "Umuti watangiwe ku kigonderabuzima")}
+              </span>
+              {hcLines.length > 0 ?
+                <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs text-slate-800">
+                  {hcLines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              : <p className="mt-1 text-xs text-slate-600">—</p>}
+            </div>
+          </div>
+          <div className="rounded-lg border border-blue-100/80 bg-white/70 p-3 md:min-h-[120px]">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              {en ? 'Symptoms' : 'Ibimenyetso'}
+            </span>
+            {symptomLines.length > 0 ?
+              <ul className="mt-2 max-h-52 list-inside list-disc space-y-0.5 overflow-y-auto text-xs leading-relaxed">
+                {symptomLines.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ul>
+            : <p className="mt-2 text-xs text-slate-600">—</p>}
+          </div>
+        </div>
+      </div>
+
       {/* Step 1 — Pre-transfer confirmation */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          Step 1 · Pre-transfer treatment
+          {en
+            ? 'Step 1 · Treatment received'
+            : 'Intambwe 1 · Umuti wakiriwe'}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <button
@@ -672,17 +823,21 @@ function DistrictHospitalPathway({
                   dhHcPreTransferReceived: true,
                   timelineEvent: {
                     event:
-                      'HC pre-transfer treatment confirmed received at district hospital',
+                      'HC treatment confirmed received at district hospital',
                     actorName: userName ?? 'District Hospital',
                     actorRole: 'District Hospital',
                   },
                 });
-                toast.success('Recorded: pre-transfer received');
+                toast.success(
+                  en
+                    ? 'Recorded: treatment received'
+                    : 'Byanditswe: umuti wakiriwe'
+                );
               })
             }
             className="rounded-xl bg-[color:var(--role-accent)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
           >
-            Yes — pre-transfer received
+            {en ? 'Yes — treatment received' : 'Yego — umuti wakiriwe'}
           </button>
           <button
             type="button"
@@ -690,7 +845,7 @@ function DistrictHospitalPathway({
             onClick={() => setDhArtModalOpen(true)}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
           >
-            No / incomplete — give at DH
+            {en ? 'No — HC treatment not made' : 'Oya — nta muti watanzwe ku HC'}
           </button>
         </div>
         {pre === false && (
@@ -702,38 +857,164 @@ function DistrictHospitalPathway({
                 await patchCase(c.id, {
                   dhHcPreTransferReceived: true,
                   timelineEvent: {
-                    event: 'Pre-transfer treatment completed at district hospital',
+                    event: 'Treatment complete at district hospital',
                     actorName: userName ?? 'District Hospital',
                     actorRole: 'District Hospital',
                   },
                 });
-                toast.success('Pre-transfer at DH recorded');
+                toast.success(
+                  en
+                    ? 'Treatment complete at district hospital'
+                    : "Umuti warangijwe ku bitaro by'akarere"
+                );
               })
             }
             className="mt-3 rounded-xl bg-[color:var(--role-accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
           >
-            Pre-transfer now completed at district hospital
+            {en
+              ? 'Treatment complete at district hospital'
+              : "Umuti warangijwe ku bitaro by'akarere"}
           </button>
         )}
         {pre !== undefined && (
           <p className="mt-3 text-xs text-slate-500">
-            Status:{' '}
+            {en ? 'Status:' : 'Imiterere:'}{' '}
             <span className="font-semibold text-slate-800">
-              {pre ? 'Pre-transfer OK' : 'Complete pre-transfer at DH'}
+              {pre
+                ? (en ? 'Treatment received' : 'Umuti wakiriwe')
+                : (en ? 'Treatment pending at DH' : "Umuti urategerejwe ku bitaro")}
             </span>
           </p>
         )}
       </div>
 
-      {/* Step 2 — Observation */}
+      {/* Step 2 — District hospital symptom checklist */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-          Step 2 · Observation (IV care, 1–7 days)
+          {en
+            ? 'Step 2 · Symptoms seen at district hospital'
+            : "Intambwe 2 · Ibimenyetso byabonetse ku bitaro by'akarere"}
+        </p>
+        <p className="text-xs text-slate-600">
+          {en
+            ? 'Check symptoms you observed in this patient.'
+            : 'Hitamo ibimenyetso wabonye kuri uyu murwayi.'}
+        </p>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          {coreDistrictSymptoms.map((s) => (
+            <div key={s} className="contents">
+              <label
+                className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition ${
+                  districtSymptoms.includes(s)
+                    ? 'border-[color:var(--role-accent)] bg-[color:var(--role-accent-soft)]'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <span className="font-medium text-slate-800">
+                  {getSymptomLabel(s, language)}
+                </span>
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-[color:var(--role-accent)] focus:ring-[color:var(--role-accent)]/30"
+                  checked={districtSymptoms.includes(s)}
+                  onChange={() =>
+                    setDistrictSymptoms((prev) =>
+                      prev.includes(s)
+                        ? prev.filter((x) => x !== s)
+                        : [...prev, s]
+                    )
+                  }
+                />
+              </label>
+
+              {s === 'Prostration' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowPediatricDangerSigns((prev) => !prev)}
+                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm transition ${
+                      districtSymptoms.includes(PEDIATRIC_DANGER_SIGNS_PARENT)
+                        ? 'border-[color:var(--role-accent)] bg-[color:var(--role-accent-soft)]'
+                        : 'border-slate-200 bg-white hover:bg-slate-50'
+                    }`}
+                    aria-expanded={showPediatricDangerSigns}
+                  >
+                    <span className="font-medium text-slate-800">
+                      {getSymptomLabel(PEDIATRIC_DANGER_SIGNS_PARENT, language)}
+                    </span>
+                    <ChevronDownIcon
+                      className={`h-4 w-4 text-slate-500 transition-transform ${
+                        showPediatricDangerSigns ? 'rotate-180' : ''
+                      }`}
+                      aria-hidden
+                    />
+                  </button>
+
+                  {showPediatricDangerSigns &&
+                    PEDIATRIC_DANGER_SIGNS.map((p) => (
+                      <label
+                        key={p}
+                        className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition ${
+                          districtSymptoms.includes(p)
+                            ? 'border-[color:var(--role-accent)] bg-[color:var(--role-accent-soft)]'
+                            : 'border-slate-200 bg-white hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="font-medium text-slate-800">
+                          {getSymptomLabel(p, language)}
+                        </span>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-slate-300 text-[color:var(--role-accent)] focus:ring-[color:var(--role-accent)]/30"
+                          checked={districtSymptoms.includes(p)}
+                          onChange={() =>
+                            setDistrictSymptoms((prev) =>
+                              prev.includes(p)
+                                ? prev.filter((x) => x !== p)
+                                : [...prev, p]
+                            )
+                          }
+                        />
+                      </label>
+                    ))}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={pathBusy || !received}
+          onClick={() =>
+            run(async () => {
+              await patchCase(c.id, {
+                symptoms: districtSymptoms,
+                timelineEvent: {
+                  event: `District hospital symptoms updated (${districtSymptoms.length} selected)`,
+                  actorName: userName ?? 'District Hospital',
+                  actorRole: 'District Hospital',
+                },
+              });
+              toast.success(en ? 'Symptoms saved' : 'Ibimenyetso byabitswe');
+            })
+          }
+          className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+        >
+          {en ? 'Save symptoms' : 'Bika ibimenyetso'}
+        </button>
+      </div>
+
+      {/* Step 3 — Observation */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          {en
+            ? 'Step 3 · Observation (IV care, 1–7 days)'
+            : "Intambwe 3 · Igenzura (ubuvuzi bwa IV, iminsi 1–7)"}
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <div>
             <label className="mb-1 block text-xs text-slate-500">
-              Planned observation (days)
+              {en ? 'Planned observation (days)' : 'Iminsi y igenzura iteganyijwe'}
             </label>
             <select
               value={obsDays}
@@ -743,7 +1024,7 @@ function DistrictHospitalPathway({
             >
               {[1, 2, 3, 4, 5, 6, 7].map((d) => (
                 <option key={d} value={d}>
-                  {d} days
+                  {en ? `${d} days` : `${d} iminsi`}
                 </option>
               ))}
             </select>
@@ -769,19 +1050,28 @@ function DistrictHospitalPathway({
                     actorRole: 'District Hospital',
                   },
                 });
-                toast.success('Observation started');
+                toast.success(
+                  en ? 'Observation started' : 'Igenzura ryatangiye'
+                );
               })
             }
             className="rounded-xl bg-[#007ea7] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#006494] disabled:opacity-50"
           >
-            {obsStarted ? 'Observation in progress' : 'Start observation (admit IV)'}
+            {obsStarted
+              ? (en ? 'Observation in progress' : 'Igenzura rirakomeje')
+              : (en
+                  ? 'Start observation (admit IV)'
+                  : 'Tangira igenzura (kwinjiza IV)')}
           </button>
         </div>
         {obsStarted && c.dhObservationStartedAt && (
           <p className="text-xs text-slate-600">
-            Started {new Date(c.dhObservationStartedAt).toLocaleString()}
+            {en ? 'Started' : 'Byatangiye'}{' '}
+            {new Date(c.dhObservationStartedAt).toLocaleString()}
             {c.dhObservationPlannedDays ?
-              ` · plan ${c.dhObservationPlannedDays} day(s)`
+              (en
+                ? ` · plan ${c.dhObservationPlannedDays} day(s)`
+                : ` · gahunda y'iminsi ${c.dhObservationPlannedDays}`)
             : ''}
           </p>
         )}
@@ -789,7 +1079,7 @@ function DistrictHospitalPathway({
         {obsStarted && !discharged && clinicalCourse === 'idle' && (
           <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
             <p className="text-xs font-semibold text-slate-700">
-              Observation
+              {en ? 'Observation' : 'Igenzura'}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
@@ -805,12 +1095,12 @@ function DistrictHospitalPathway({
                         actorRole: 'District Hospital',
                       },
                     });
-                    toast.success('Recorded');
+                    toast.success(en ? 'Recorded' : 'Byanditswe');
                   })
                 }
                 className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50"
               >
-                Improving
+                {en ? 'Improving' : 'Ari gutera imbere'}
               </button>
               <button
                 type="button"
@@ -826,12 +1116,12 @@ function DistrictHospitalPathway({
                         actorRole: 'District Hospital',
                       },
                     });
-                    toast.success('Recorded');
+                    toast.success(en ? 'Recorded' : 'Byanditswe');
                   })
                 }
                 className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50"
               >
-                Adjusted dosing
+                {en ? 'Adjusted dosing' : "Ingano y'imiti yahinduwe"}
               </button>
               <button
                 type="button"
@@ -847,12 +1137,14 @@ function DistrictHospitalPathway({
                         actorRole: 'District Hospital',
                       },
                     });
-                    toast.success('Recorded');
+                    toast.success(en ? 'Recorded' : 'Byanditswe');
                   })
                 }
                 className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-900 ring-1 ring-rose-200 hover:bg-rose-100"
               >
-                Not improving — need referral
+                {en
+                  ? 'Not improving — need referral'
+                  : 'Ntiyatera imbere — akeneye koherezwa'}
               </button>
             </div>
           </div>
@@ -861,17 +1153,23 @@ function DistrictHospitalPathway({
 
       {showIVToDischargePath && (
         <>
-          {/* Step 3 — Management notes */}
+          {/* Step 4 — Management notes */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Step 3 · IV / inpatient management notes
+              {en
+                ? 'Step 4 · IV / inpatient management notes'
+                : "Intambwe 4 · Ibisobanuro ku micungire y'ubuvuzi bwa IV"}
             </p>
             <textarea
               value={mgmtNotes}
               onChange={(e) => setMgmtNotes(e.target.value)}
               rows={4}
               disabled={pathBusy || discharged}
-              placeholder="IV artesunate, fluids, antibiotics, monitoring…"
+              placeholder={
+                en
+                  ? 'IV artesunate, fluids, antibiotics, monitoring…'
+                  : 'Artesunate ya IV, amazi, antibiyotike, igenzura…'
+              }
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
             />
             <button
@@ -887,19 +1185,25 @@ function DistrictHospitalPathway({
                       actorRole: 'District Hospital',
                     },
                   });
-                  toast.success('Management notes saved');
+                  toast.success(
+                    en
+                      ? 'Management notes saved'
+                      : "Ibisobanuro by'ubuvuzi byabitswe"
+                  );
                 })
               }
               className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
             >
-              Save notes
+              {en ? 'Save notes' : 'Bika ibisobanuro'}
             </button>
           </div>
 
-          {/* Step 4 — Oral ready */}
+          {/* Step 5 — Oral ready */}
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              Step 4 · Oral treatment (step-down)
+              {en
+                ? 'Step 5 · Oral treatment (step-down)'
+                : 'Intambwe 5 · Ubuvuzi bwo kunywa'}
             </p>
             <button
               type="button"
@@ -914,12 +1218,20 @@ function DistrictHospitalPathway({
                       actorRole: 'District Hospital',
                     },
                   });
-                  toast.success('Oral treatment step recorded');
+                  toast.success(
+                    en
+                      ? 'Oral treatment step recorded'
+                      : 'Intambwe y ubuvuzi bwo kunywa yanditswe'
+                  );
                 })
               }
               className="rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 disabled:opacity-50"
             >
-              {oralReady ? 'Oral treatment recorded' : 'Mark ready for oral treatment'}
+              {oralReady
+                ? (en ? 'Oral treatment recorded' : 'Ubuvuzi bwo kunywa bwanditswe')
+                : (en
+                    ? 'Mark ready for oral treatment'
+                    : 'Shyira ko yiteguye ubuvuzi bwo kunywa')}
             </button>
             {oralReady && c.dhOralTreatmentReadyAt && (
               <p className="text-xs text-slate-600">
@@ -928,10 +1240,12 @@ function DistrictHospitalPathway({
             )}
           </div>
 
-          {/* Step 5 — Discharge home */}
+          {/* Step 6 — Discharge home */}
           <div className="rounded-2xl border border-[color:var(--role-accent)]/25 bg-[color:var(--role-accent-soft)] p-6 shadow-sm space-y-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--role-accent)]">
-              Step 5 · Discharge home (improved)
+              {en
+                ? 'Step 6 · Discharge home (improved)'
+                : "Intambwe 6 · Gusezerera umurwayi (ameze neza)"}
             </p>
             <button
               type="button"
@@ -949,12 +1263,20 @@ function DistrictHospitalPathway({
                       actorRole: 'District Hospital',
                     },
                   });
-                  toast.success('Discharge recorded');
+                  toast.success(
+                    en
+                      ? 'Discharge recorded'
+                      : 'Gusezerera umurwayi byanditswe'
+                  );
                 })
               }
               className="rounded-xl bg-[color:var(--role-accent)] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-50"
             >
-              {discharged ? 'Discharged' : 'Discharge patient home (oral follow-up)'}
+              {discharged
+                ? (en ? 'Discharged' : 'Yasezerewe')
+                : (en
+                    ? 'Discharge patient home (oral follow-up)'
+                    : 'Sezerera umurwayi asubire mu rugo')}
             </button>
             {discharged && c.hospitalDischargeDateTime && (
               <p className="text-xs font-medium text-[color:var(--role-accent)]">
@@ -970,15 +1292,20 @@ function DistrictHospitalPathway({
         <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-6 shadow-sm space-y-4">
           <h3 className="flex items-center gap-2 text-sm font-bold text-rose-950">
             <ArrowUpRightIcon size={18} />
-            Referral / provincial hospital transfer
+            {en
+              ? 'Referral / provincial hospital transfer'
+              : 'Kohereza ku bitaro byoherezwaho'}
           </h3>
           <div>
             <label className="mb-1 block text-xs font-semibold text-rose-900">
-              Means of transport to referral hospital
+              {en
+                ? 'Means of transport to referral hospital'
+                : 'Uburyo bwo kujyana umurwayi ku bitaro byoherezwaho'}
             </label>
             <p className="mb-2 text-[11px] text-rose-800/90">
-              How this patient will travel from the district hospital to the
-              referral / provincial facility.
+              {en
+                ? 'How this patient will travel from the district hospital to the referral / provincial facility.'
+                : "Uko umurwayi azava ku bitaro by'akarere ajyanwa ku bitaro byoherezwaho."}
             </p>
             <select
               value={referralTransport}
@@ -990,10 +1317,12 @@ function DistrictHospitalPathway({
               disabled={transferring}
               className="w-full max-w-sm rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             >
-              <option value="">Select transport…</option>
-              <option value="Self">Self</option>
-              <option value="With relative">With relative</option>
-              <option value="Ambulance">Ambulance</option>
+              <option value="">{en ? 'Select transport…' : 'Hitamo uko ajyanwa…'}</option>
+              <option value="Self">{en ? 'Self' : 'Yiyijyaniye'}</option>
+              <option value="With relative">
+                {en ? 'With relative' : 'Aherekejwe n umuvandimwe'}
+              </option>
+              <option value="Ambulance">{en ? 'Ambulance' : 'Ambulansi'}</option>
             </select>
           </div>
           <button
@@ -1013,11 +1342,19 @@ function DistrictHospitalPathway({
                     actorRole: 'District Hospital',
                   },
                 });
-                toast.success('Referral hospital and RICH notified');
+                toast.success(
+                  en
+                    ? 'Referral hospital and RICH notified'
+                    : 'Ibitaro byoherezwaho na RICH babimenyeshejwe'
+                );
                 navigate(listPath);
               } catch (e) {
                 toast.error(
-                  e instanceof Error ? e.message : 'Transfer failed'
+                  e instanceof Error
+                    ? e.message
+                    : en
+                      ? 'Transfer failed'
+                      : 'Kohereza ntibyashobotse'
                 );
               } finally {
                 setTransferring(false);
@@ -1026,8 +1363,10 @@ function DistrictHospitalPathway({
             className="w-full rounded-xl bg-rose-700 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-rose-800 disabled:opacity-60 sm:w-auto"
           >
             {transferring ?
-              'Sending…'
-            : 'Confirm transfer to referral hospital'}
+              (en ? 'Sending…' : 'Birimo koherezwa…')
+            : (en
+                ? 'Confirm transfer to referral hospital'
+                : 'Emeza kohereza ku bitaro byoherezwaho')}
           </button>
         </div>
       )}

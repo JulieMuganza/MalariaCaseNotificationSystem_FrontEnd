@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { CalculatorIcon, PlusIcon, SaveIcon, XIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type DoseRow = { drug: string; dose: string; route: string; time: string };
 
@@ -10,13 +11,15 @@ type Props = {
   onSave: (lines: string[]) => Promise<void>;
 };
 
-/** When HC did not give pre-transfer treatment: capture weight + ART-style doses at DH (same math as HC clinical file). */
+/** When HC did not give treatment: capture weight + ART-style doses at DH (same math as HC clinical file). */
 export function DhNoPreTransferTreatmentModal({
   open,
   onClose,
   existingHcPreTreatment,
   onSave,
 }: Props) {
+  const { i18n } = useTranslation();
+  const en = i18n.language?.toLowerCase().startsWith('en');
   const [weight, setWeight] = useState<number | ''>('');
   const [selectedDrug, setSelectedDrug] = useState<'Artesunate' | 'Artemeter'>('Artesunate');
   const [log, setLog] = useState<DoseRow[]>([]);
@@ -57,7 +60,9 @@ export function DhNoPreTransferTreatmentModal({
   async function handleSave() {
     if (!weight || typeof weight !== 'number') return;
     const modeLine =
-      'Pre-transfer mode: DH (no HC handoff — treatment started at district hospital)';
+      en
+        ? 'No HC treatment made - enter weight, review suggested dose, add doses, then save.'
+        : 'Nta muti watangiwe kuri HC - andika ibiro, reba ingano y umuti, ongeramo dose, hanyuma ubike.';
     const wLine = `DH weight (kg): ${weight}`;
     const doseLines = log.map(
       (e) =>
@@ -87,25 +92,28 @@ export function DhNoPreTransferTreatmentModal({
       <button
         type="button"
         className="absolute inset-0 bg-black/50"
-        aria-label="Close"
+        aria-label={en ? 'Close' : 'Funga'}
         onClick={onClose}
       />
       <div className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-5 shadow-xl sm:rounded-2xl">
         <div className="mb-4 flex items-start justify-between gap-2">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">
-              Pre-transfer treatment at district hospital
+              {en
+                ? 'Treatment at district hospital'
+                : "Ubuvuzi ku bitaro by'akarere"}
             </h3>
             <p className="mt-1 text-xs text-slate-600">
-              No HC handoff — enter weight, review suggested dose, add doses, then save (same logic as health center
-              clinical file).
+              {en
+                ? 'No HC treatment made - enter weight, review suggested dose, add doses, then save.'
+                : 'Nta muti watangiwe kuri HC - andika ibiro, reba ingano y umuti, ongeramo dose, hanyuma ubike.'}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-            aria-label="Close"
+            aria-label={en ? 'Close' : 'Funga'}
           >
             <XIcon size={20} />
           </button>
@@ -113,7 +121,9 @@ export function DhNoPreTransferTreatmentModal({
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Weight (kg)</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              {en ? 'Weight (kg)' : 'Ibiro (kg)'}
+            </label>
             <input
               type="number"
               min={0}
@@ -127,7 +137,9 @@ export function DhNoPreTransferTreatmentModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Drug</label>
+            <label className="mb-1 block text-xs font-medium text-slate-600">
+              {en ? 'Drug' : 'Umuti'}
+            </label>
             <div className="flex gap-2">
               {(['Artesunate', 'Artemeter'] as const).map((d) => (
                 <button
@@ -149,7 +161,7 @@ export function DhNoPreTransferTreatmentModal({
             <div className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-50 p-3 text-sm">
               <CalculatorIcon size={18} className="text-slate-500" />
               <span className="font-medium text-slate-800">
-                Suggested: {suggested.val} {suggested.unit}
+                {en ? 'Suggested:' : 'Inama:'} {suggested.val} {suggested.unit}
               </span>
               <span className="text-xs text-slate-500">({suggested.label})</span>
               <button
@@ -157,7 +169,7 @@ export function DhNoPreTransferTreatmentModal({
                 onClick={addDoseFromSuggestion}
                 className="ml-auto inline-flex items-center gap-1 rounded-lg bg-[color:var(--role-accent)] px-3 py-1.5 text-xs font-semibold text-white"
               >
-                <PlusIcon size={14} /> Add dose
+                <PlusIcon size={14} /> {en ? 'Add dose' : 'Ongeramo dose'}
               </button>
             </div>
           )}
@@ -178,7 +190,7 @@ export function DhNoPreTransferTreatmentModal({
             onClick={onClose}
             className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
-            Cancel
+            {en ? 'Cancel' : 'Hagarika'}
           </button>
           <button
             type="button"
@@ -187,7 +199,9 @@ export function DhNoPreTransferTreatmentModal({
             className="inline-flex items-center gap-2 rounded-xl bg-[color:var(--role-accent)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
           >
             <SaveIcon size={18} />
-            {saving ? 'Saving…' : 'Save treatment'}
+            {saving
+              ? (en ? 'Saving…' : 'Birabikwa…')
+              : (en ? 'Save treatment' : 'Bika ubuvuzi')}
           </button>
         </div>
       </div>

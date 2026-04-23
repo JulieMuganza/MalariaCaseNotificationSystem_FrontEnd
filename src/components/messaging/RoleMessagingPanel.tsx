@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 type ConversationRole =
   | 'CHW'
   | 'Health Center'
+  | 'Health Post'
   | 'Local Clinic'
   | 'District Hospital'
   | 'Referral Hospital';
@@ -48,7 +49,7 @@ type Props = {
 
 function roleIcon(role: ConversationRole) {
   if (role === 'CHW') return <UserRoundIcon size={18} />;
-  if (role === 'Health Center' || role === 'Local Clinic')
+  if (role === 'Health Center' || role === 'Local Clinic' || role === 'Health Post')
     return <Building2Icon size={18} />;
   return <HospitalIcon size={18} />;
 }

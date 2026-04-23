@@ -166,9 +166,9 @@ export function RichPatientJourney() {
               {c.timeline.map((t, i) => (
                 <div key={`${t.timestamp}-${i}`} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-600" />
+                    <div className="mt-1.5 h-2 w-2 rounded-full bg-[color:var(--role-accent)]" />
                     {i < c.timeline.length - 1 && (
-                      <div className="mt-1 flex-1 w-0.5 bg-blue-200" />
+                      <div className="mt-1 flex-1 w-0.5 bg-[color:var(--role-accent-soft)]" />
                     )}
                   </div>
                   <div className="pb-3">

@@ -42,17 +42,17 @@ function formatTs(iso?: string, locale?: string) {
   }
 }
 
-/** First timeline actor was a first-line facility (HC or local clinic), not a CHW referral. */
+/** First timeline actor was a first-line facility (HC or health post), not a CHW referral. */
 function isFirstLineFacilityOriginatedCase(c: MalariaCase): boolean {
   const first = c.timeline?.[0];
   if (!first?.role) return false;
   const r = String(first.role).toLowerCase();
-  return r.includes('health center') || r.includes('local clinic');
+  return r.includes('health center') || r.includes('local clinic') || r.includes('health post');
 }
 
 function isLocalClinicFirstActor(c: MalariaCase): boolean {
   const r = String(c.timeline?.[0]?.role || '').toLowerCase();
-  return r.includes('local clinic');
+  return r.includes('local clinic') || r.includes('health post');
 }
 
 const ACCENT = {
@@ -69,9 +69,9 @@ const ACCENT = {
     muted: 'border-slate-200 bg-white text-slate-400',
   },
   blue: {
-    done: 'border-blue-600 bg-blue-600 text-white',
-    current: 'border-blue-400 bg-blue-50 text-blue-900',
-    line: 'bg-blue-500',
+    done: 'border-[color:var(--role-accent)] bg-[color:var(--role-accent)] text-white',
+    current: 'border-[color:var(--role-accent)] bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]',
+    line: 'bg-[color:var(--role-accent)]',
     muted: 'border-slate-200 bg-white text-slate-400',
   },
 } as const;
@@ -98,7 +98,7 @@ export function PatientJourneyTimeline({
       Treated: en ? 'Treated' : 'Yazamuwe',
       Discharged: en ? 'Discharged' : 'yasezerewe',
       Deceased: en ? 'Deceased' : 'Yitabye Imana',
-      Resolved: en ? 'Resolved' : 'Byakemutse',
+      Resolved: en ? 'Resolved' : 'Yasezerewe',
     };
     return labels[status] ?? status;
   };
@@ -160,7 +160,7 @@ export function PatientJourneyTimeline({
         {
           id: 'hc_intake',
           title: walkInLocalClinic
-            ? (en ? 'Local clinic registration' : 'Iyandikisha ku ivuriro ry\'ibanze')
+            ? (en ? 'Health Post registration' : 'Iyandikisha ku Ivuriro Riciriritse')
             : (en ? 'Health center registration' : 'Iyandikisha ku kigonderabuzima'),
           subtitle: intakeSymptomLabel,
           done: true,
@@ -171,8 +171,8 @@ export function PatientJourneyTimeline({
           title: en ? 'Community (CHW) referral' : 'Kohereza kwa CHW mu muryango',
           subtitle: walkInLocalClinic
             ? (en
-              ? 'Not applicable — patient presented directly at this local clinic'
-              : 'Ntibikurikizwa — umurwayi yaje kuri iri vuriro ry\'ibanze')
+              ? 'Not applicable — patient presented directly at this health post'
+              : 'Ntibikurikizwa — umurwayi yaje kuri iri Vuriro Riciriritse')
             : (en
               ? 'Not applicable — patient presented directly at this health center'
               : 'Ntibikurikizwa — umurwayi yaje kuri iki kigonderabuzima'),
@@ -182,7 +182,7 @@ export function PatientJourneyTimeline({
         {
           id: 'hc',
           title: walkInLocalClinic
-            ? (en ? 'Care at local clinic' : 'Ubuvuzi ku ivuriro ry\'ibanze')
+            ? (en ? 'Care at Health Post' : 'Ubuvuzi ku Ivuriro Riciriritse')
             : (en ? 'Care at health center' : 'Ubuvuzi ku kigonderabuzima'),
           subtitle: nonSevereClosedAtChw
             ? (en ? 'Not applicable' : 'Ntibikurikizwa')
@@ -242,7 +242,7 @@ export function PatientJourneyTimeline({
           id: 'refer',
           title:
             c.chwPrimaryReferral === 'LOCAL_CLINIC'
-              ? (en ? 'Referral to local clinic' : 'Kohereza ku ivuriro ry\'ibanze')
+              ? (en ? 'Referral to Health Post' : 'Kohereza ku Ivuriro Riciriritse')
               : (en ? 'Referral to Health Center' : 'Kohereza ku kigonderabuzima'),
           subtitle: nonSevereClosedAtChw
             ? (en ? 'No transfer required' : 'Nta kohereza bisabwa')
@@ -256,7 +256,7 @@ export function PatientJourneyTimeline({
           id: 'hc',
           title:
             c.chwPrimaryReferral === 'LOCAL_CLINIC'
-              ? (en ? 'Local clinic' : 'Ivuriro ry\'ibanze')
+              ? (en ? 'Health Post' : 'Ivuriro Riciriritse')
               : (en ? 'Health Center' : 'Ikigonderabuzima'),
           subtitle: nonSevereClosedAtChw
             ? (en ? 'Not applicable' : 'Ntibikurikizwa')
@@ -291,7 +291,7 @@ export function PatientJourneyTimeline({
             (nonSevereClosedAtChw
               ? (en
                 ? 'Resolved at CHW (non-severe malaria, no referral)'
-                : 'Byakemutse kuri CHW (malariya idakomeye, nta kohereza)')
+                : 'Yasezerewe kuri CHW (malariya idakomeye, nta kohereza)')
               : '') ||
             c.finalOutcomeHospital ||
             c.outcome ||

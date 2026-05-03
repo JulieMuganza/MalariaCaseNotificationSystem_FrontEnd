@@ -33,8 +33,18 @@ export const HC_PRE_TREATMENT_OPTIONS = [
   'Other (specify in notes)'
 ] as const;
 
-export type ChwToHcTransport = 'Self' | 'With CHW' | 'Ambulance';
-export type HcToHospitalTransport = 'Self' | 'With relative' | 'Ambulance';
+export type ChwToHcTransport =
+  | 'Walk'
+  | 'Bicycle'
+  | 'Motor'
+  | 'Car/Bus'
+  | 'Ambulance';
+export type HcToHospitalTransport =
+  | 'Walk'
+  | 'Bicycle'
+  | 'Motor'
+  | 'Car/Bus'
+  | 'Ambulance';
 
 export type NotificationPayloadVariant =
   | 'chw_hc_partial'

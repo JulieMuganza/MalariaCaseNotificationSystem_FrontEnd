@@ -81,6 +81,7 @@ export function HCDashboard() {
         ? 'Health Center'
         : 'Ikigo Nderabuzima';
   const dayLocale: 'en' | 'rw' = en ? 'en' : 'rw';
+  const isHealthPost = base === '/lc';
 
   const triageQueue = useMemo(
     () => cases.filter((c) => c.status === 'Pending' || c.status === 'Referred'),
@@ -113,7 +114,13 @@ export function HCDashboard() {
       onClick: () => navigate(`${base}/triage`, { state: { tab: 'pending' } }),
     },
     {
-      label: en ? 'At health center' : 'Ku kigo',
+      label: en
+        ? isHealthPost
+          ? 'At health post'
+          : 'At health center'
+        : isHealthPost
+          ? 'Ku Ivuriro Riciriritse'
+          : 'Ku kigo',
       value: inObservation.length,
       icon: ActivityIcon,
       ring: 'ring-blue-100',
@@ -367,7 +374,7 @@ export function HCDashboard() {
                       {c.sector}
                     </td>
                     <td className="py-3 pr-4">
-                      <StatusBadge status={c.status} />
+                      <StatusBadge status={c.status} isHealthPost={isHealthPost} />
                     </td>
                     <td className="py-3">
                       <button

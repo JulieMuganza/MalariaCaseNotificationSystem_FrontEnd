@@ -263,10 +263,20 @@ export function HCReports() {
         label: en ? 'Pending / referred' : 'Bategereje / Koherejwe',
         value: byStatus.Pending + byStatus.Referred,
         icon: ActivityIcon,
-        hint: en ? 'Not yet completed at HC' : '',
+        hint: en
+          ? isLocalClinic
+            ? 'Not yet completed at health post'
+            : 'Not yet completed at HC'
+          : '',
       },
       {
-        label: en ? 'At health center' : 'Ku kigo',
+        label: en
+          ? isLocalClinic
+            ? 'At health post'
+            : 'At health center'
+          : isLocalClinic
+            ? 'Ku Ivuriro Riciriritse'
+            : 'Ku kigo',
         value: byStatus['HC Received'],
         icon: HeartPulseIcon,
         hint: '',
@@ -320,7 +330,7 @@ export function HCReports() {
         hint: '',
       },
     ];
-  }, [aggregates, scoped.length, en]);
+  }, [aggregates, scoped.length, en, isLocalClinic]);
 
   return (
     <div className={`${hcPage.wrap} print:space-y-4`}>
@@ -632,7 +642,10 @@ export function HCReports() {
                             {c.village}, {c.sector}
                           </td>
                           <td className="py-2.5 pr-3">
-                            <StatusBadge status={c.status} />
+                            <StatusBadge
+                              status={c.status}
+                              isHealthPost={isLocalClinic}
+                            />
                           </td>
                           <td className="py-2.5 pr-3 text-xs text-gray-600 max-w-[200px] truncate" title={[...(c.symptoms ?? []), ...(c.chwSymptoms ?? [])].join(', ')}>
                             {(c.symptomCount ?? 0) > 0

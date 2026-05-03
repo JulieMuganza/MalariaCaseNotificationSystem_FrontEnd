@@ -27,6 +27,11 @@ import { useAuth } from '../../context/AuthContext';
 import { useCasesApi } from '../../context/CasesContext';
 import { apiFetch } from '../../lib/api';
 import { ConfirmModal } from '../../components/shared/ConfirmModal';
+import {
+  FACILITY_TRANSPORT_LABELS,
+  FACILITY_TRANSPORT_VALUES,
+  type FacilityTransportMode,
+} from '../../constants/facilityTransport';
 /** Default for `transportMode` on create (general travel to care). */
 const ARRIVAL_TRANSPORT_DEFAULT = 'Walk';
 
@@ -103,7 +108,7 @@ function RadioCards({
   return (
     <div>
       <FieldLabel required={required}>{label}</FieldLabel>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {options.map((o) => {
           const item = typeof o === 'string' ? { value: o, label: o } : o;
           return (
@@ -147,8 +152,19 @@ export function CHWNewCase() {
   const [rapidTestResult, setRapidTestResult] = useState<'Positive' | 'Negative' | ''>('');
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [showPediatricDangerSigns, setShowPediatricDangerSigns] = useState(false);
+  const [chwReferralTransportMode, setChwReferralTransportMode] =
+    useState<FacilityTransportMode>('Walk');
   const hasPediatricDangerSignsSelected = symptoms.some((s) =>
     PEDIATRIC_DANGER_SIGNS.includes(s as (typeof PEDIATRIC_DANGER_SIGNS)[number])
+  );
+
+  const referralTransportCardOptions = useMemo(
+    () =>
+      FACILITY_TRANSPORT_VALUES.map((v) => ({
+        value: v,
+        label: en ? FACILITY_TRANSPORT_LABELS[v].en : FACILITY_TRANSPORT_LABELS[v].rw,
+      })),
+    [en]
   );
 
   /** Patient location — all districts (same routing rules everywhere; not limited to CHW home province). */
@@ -256,9 +272,9 @@ export function CHWNewCase() {
         { value: 'Negative', label: 'Negatifu' },
       ];
   const insuranceTypeOptions = en
-    ? ['CBHI', 'RAMA', 'MMI', 'Other']
+    ? ['Mutuweli', 'RAMA', 'MMI', 'Other']
     : [
-        { value: 'CBHI', label: 'CBHI' },
+        { value: 'Mutuweli', label: 'Mutuweli' },
         { value: 'RAMA', label: 'RAMA' },
         { value: 'MMI', label: 'MMI' },
         { value: 'Other', label: 'Ibindi' },
@@ -383,7 +399,10 @@ export function CHWNewCase() {
       llinStatus: undefined,
       sleepsUnderLLIN: undefined,
       chwTransferDateTime: new Date().toISOString(),
-      chwReferralTransport: 'Walk' as const,
+      chwReferralTransport:
+        rapidTestResult === 'Positive' && symptoms.length > 0
+          ? chwReferralTransportMode
+          : 'Walk',
       ...(rapidTestResult === 'Positive' && symptoms.length > 0
         ? { chwPrimaryReferral: 'HEALTH_CENTER' as const }
         : {}),
@@ -746,6 +765,23 @@ export function CHWNewCase() {
                         {symptoms.length > 1 ? (en ? 's' : '') : ''} {en ? 'selected' : 'byahiswemo'}
                       </p>
                     )}
+                    {rapidTestResult === 'Positive' && symptoms.length > 0 && (
+                      <div className="mt-6">
+                        <RadioCards
+                          label={
+                            en
+                              ? 'Transport to health facility (referral)'
+                              : 'Urugendo rw’ujyana ku kigo (kohereza)'
+                          }
+                          value={chwReferralTransportMode}
+                          onChange={(v) =>
+                            setChwReferralTransportMode(v as FacilityTransportMode)
+                          }
+                          options={referralTransportCardOptions}
+                          required
+                        />
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -794,6 +830,16 @@ export function CHWNewCase() {
                             ? (en ? 'Referral starts (severe case alert)' : 'Kohereza biratangira (ubutumwa bw\'ikibazo gikomeye)')
                             : (en ? 'Closed at CHW (non-severe, no transfer)' : 'Byafunzwe kuri CHW (si ikibazo gikomeye)'),
                         ],
+                        ...(rapidTestResult === 'Positive' && symptoms.length > 0
+                          ? ([
+                              [
+                                en ? 'Referral transport' : 'Urugendo rw’ohereza',
+                                en
+                                  ? FACILITY_TRANSPORT_LABELS[chwReferralTransportMode].en
+                                  : FACILITY_TRANSPORT_LABELS[chwReferralTransportMode].rw,
+                              ],
+                            ] as [string, string][])
+                          : ([] as [string, string][])),
                         ...symptoms.map((s) => [
                           getSymptomLabel(s, language),
                           '✓',

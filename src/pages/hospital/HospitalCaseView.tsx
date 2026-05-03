@@ -24,8 +24,16 @@ import {
   getSymptomLabel,
 } from '../../data/mockData';
 import { useTranslation } from 'react-i18next';
+import {
+  coerceFacilityTransport,
+  FACILITY_TRANSPORT_LABELS,
+  FACILITY_TRANSPORT_VALUES,
+  type FacilityTransportMode,
+} from '../../constants/facilityTransport';
 
 type HospitalTab = 'pathway' | 'overview' | 'record';
+
+type DhTransportSelection = '' | FacilityTransportMode;
 
 export function HospitalCaseView() {
   const { i18n } = useTranslation();
@@ -445,10 +453,22 @@ function HospitalAssessmentPanel({ c }: { c: MalariaCase }) {
       <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
         <div>
           <span className="text-slate-500">
-            {en ? 'Severe malaria test' : "Ikizamini cya malaria y'igikatu"}
+            {en
+              ? 'Severe malaria test (HC / health post)'
+              : "Ikizamini cya malaria y'igikatu (HC / Ivuriro Riciriritse)"}
           </span>
           <p className="mt-1 font-semibold text-slate-900">
             {c.severeMalariaTestResult || '—'}
+          </p>
+        </div>
+        <div>
+          <span className="text-slate-500">
+            {en
+              ? 'Severe malaria test (district hospital)'
+              : "Ikizamini cya malaria y'igikatu (ibitaro by'akarere)"}
+          </span>
+          <p className="mt-1 font-semibold text-slate-900">
+            {c.dhSevereMalariaTestResult || '—'}
           </p>
         </div>
         <div>
@@ -476,7 +496,9 @@ function HospitalAssessmentPanel({ c }: { c: MalariaCase }) {
           </p>
         </div>
       </div>
-      {c.severeMalariaTestResult === 'Positive' && c.hospitalManagementMedication && (
+      {(c.dhSevereMalariaTestResult === 'Positive' ||
+        c.severeMalariaTestResult === 'Positive') &&
+        c.hospitalManagementMedication && (
         <div className="rounded-xl border border-amber-100 bg-amber-50/80 p-3 text-xs text-amber-950">
           <strong>{en ? 'Management / medicines' : 'Ubuvuzi / imiti'}</strong>{' '}
           {en
@@ -559,9 +581,12 @@ function DistrictHospitalPathway({
     return 'idle';
   });
   const [transferring, setTransferring] = useState(false);
-  const [referralTransport, setReferralTransport] = useState<
-    '' | 'Self' | 'With relative' | 'Ambulance'
-  >(() => c.dhReferralToReferralHospitalTransport ?? '');
+  const [referralTransport, setReferralTransport] = useState<DhTransportSelection>(
+    () =>
+      c.dhReferralToReferralHospitalTransport
+        ? coerceFacilityTransport(c.dhReferralToReferralHospitalTransport, 'Walk')
+        : ''
+  );
   const [dhArtModalOpen, setDhArtModalOpen] = useState(false);
   const [districtSymptoms, setDistrictSymptoms] = useState<string[]>(
     c.symptoms ?? []
@@ -569,7 +594,11 @@ function DistrictHospitalPathway({
   const [showPediatricDangerSigns, setShowPediatricDangerSigns] = useState(false);
 
   useEffect(() => {
-    setReferralTransport(c.dhReferralToReferralHospitalTransport ?? '');
+    setReferralTransport(
+      c.dhReferralToReferralHospitalTransport
+        ? coerceFacilityTransport(c.dhReferralToReferralHospitalTransport, 'Walk')
+        : ''
+    );
   }, [c.id, c.dhReferralToReferralHospitalTransport]);
 
   useEffect(() => {
@@ -629,14 +658,23 @@ function DistrictHospitalPathway({
   const symptomLines = mergedSymptoms(c);
   const fromHealthPost = c.chwPrimaryReferral === 'LOCAL_CLINIC';
   const received = Boolean(c.hospitalReceivedDateTime);
+  const dhDiagDone = Boolean(c.dhSevereMalariaTestResult);
+  const dhPositive = c.dhSevereMalariaTestResult === 'Positive';
+  const dhNegative = c.dhSevereMalariaTestResult === 'Negative';
   const pre = c.dhHcPreTransferReceived;
   const obsStarted = Boolean(c.dhObservationStartedAt);
   const oralReady = Boolean(c.dhOralTreatmentReadyAt);
   const discharged = Boolean(c.hospitalDischargeDateTime);
   const showIVToDischargePath =
+    dhPositive &&
     obsStarted &&
     !discharged &&
     (clinicalCourse === 'improving' || clinicalCourse === 'adjusted');
+
+  const diagnosisLocked =
+    discharged ||
+    obsStarted ||
+    (dhPositive && pre !== undefined);
 
   const run = async (fn: () => Promise<void>) => {
     setPathBusy(true);
@@ -646,6 +684,30 @@ function DistrictHospitalPathway({
       setPathBusy(false);
     }
   };
+
+  const recordDhTest = (r: 'Positive' | 'Negative') =>
+    run(async () => {
+      await patchCase(c.id, {
+        dhSevereMalariaTestResult: r,
+        timelineEvent: {
+          event:
+            r === 'Positive'
+              ? 'District hospital severe malaria test — Positive'
+              : 'District hospital severe malaria test — Negative',
+          actorName: userName ?? 'District Hospital',
+          actorRole: 'District Hospital',
+        },
+      });
+      toast.success(
+        en
+          ? r === 'Positive'
+            ? 'Positive recorded — continue with treatment steps'
+            : 'Negative recorded — you can discharge when ready'
+          : r === 'Positive'
+            ? 'Byagaragaye byanditswe — komeza intambwe z’ubuvuzi'
+            : 'Ntabwo byagaragaye byanditswe — urashobora gusezerera iyo byemejwe'
+      );
+    });
 
   return (
     <section className="space-y-6">
@@ -745,6 +807,17 @@ function DistrictHospitalPathway({
             </div>
             <div>
               <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                {en
+                  ? 'District hospital severe malaria test'
+                  : "Ikizamini cya malaria y'igikatu ku bitaro by'akarere"}
+              </span>
+              <p className="mt-0.5 text-sm font-medium leading-snug">
+                {c.dhSevereMalariaTestResult ??
+                  (en ? 'Record in diagnosis step' : "Andika mu ntambwe y'isuzuma")}
+              </p>
+            </div>
+            <div>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                 {en ? 'Means of transport' : 'Uburyo bwo gutwara umurwayi'}
               </span>
               <p className="mt-0.5 text-[11px] text-slate-600">
@@ -806,7 +879,109 @@ function DistrictHospitalPathway({
         </div>
       </div>
 
-      {/* Step 1 — Pre-transfer confirmation */}
+      {/* Diagnosis — tap Positive or Negative (no separate save) */}
+      <div className="rounded-2xl border border-amber-100 bg-amber-50/35 p-6 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900/90">
+          {en ? 'Diagnosis (required)' : 'Isuzuma (risabwa)'}
+        </p>
+        <p className="mt-2 text-sm text-slate-800">
+          {en
+            ? 'Choose the district hospital severe malaria test.'
+            : "Hitamo ikizamini cya malaria y'igikatu ku bitaro by'akarere."}
+        </p>
+        {diagnosisLocked && c.dhSevereMalariaTestResult ? (
+          <p className="mt-3 text-sm font-semibold text-slate-900">
+            {en ? 'District hospital test:' : "Ikizamini ku bitaro by'akarere:"}{' '}
+            <span className="text-[color:var(--role-accent)]">
+              {c.dhSevereMalariaTestResult}
+            </span>
+          </p>
+        ) : (
+          <div className="mt-4 flex flex-wrap gap-3">
+            {(['Positive', 'Negative'] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                disabled={!received || pathBusy || diagnosisLocked}
+                onClick={() => void recordDhTest(r)}
+                className={`min-w-[140px] rounded-xl border-2 px-5 py-3 text-sm font-bold transition ${
+                  c.dhSevereMalariaTestResult === r
+                    ? 'border-[color:var(--role-accent)] bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]'
+                    : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300'
+                } disabled:opacity-50`}
+              >
+                {en
+                  ? r
+                  : r === 'Positive'
+                    ? 'Byagaragaye'
+                    : 'Ntabwo byagaragaye'}
+              </button>
+            ))}
+          </div>
+        )}
+        {received && !dhDiagDone && (
+          <p className="mt-3 text-xs font-medium text-amber-900">
+            {en
+              ? 'Select Positive or Negative above to continue.'
+              : 'Hitamo Byagaragaye cyangwa Ntabwo byagaragawe hejuru.'}
+          </p>
+        )}
+      </div>
+
+      {/* Negative: discharge home (skip severe treatment steps) */}
+      {dhNegative && (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 shadow-sm space-y-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900">
+            {en ? 'Discharge' : 'Gusezerera'}
+          </p>
+          <p className="text-sm text-slate-800">
+            {en
+              ? 'Severe malaria testing is negative at the district hospital. When the patient is stable and ready to leave, record discharge home here (oral follow-up or return to referring facility as per protocol).'
+              : "Ikizamini cyerekana ko malariya y'igikatu ntibagaragaye ku bitaro by'akarere. Niba umurwayi ameze neza kandi yiteguye kuva, andika hano ko yasezerewe."}
+          </p>
+          {!discharged ? (
+            <button
+              type="button"
+              disabled={pathBusy || !received}
+              onClick={() =>
+                run(async () => {
+                  await patchCase(c.id, {
+                    status: 'Discharged',
+                    hospitalDischargeDateTime: new Date().toISOString(),
+                    finalOutcomeHospital: 'Recovered',
+                    outcome: 'Treated & Discharged',
+                    timelineEvent: {
+                      event:
+                        'Patient discharged home — district hospital severe malaria test negative',
+                      actorName: userName ?? 'District Hospital',
+                      actorRole: 'District Hospital',
+                    },
+                  });
+                  toast.success(
+                    en ? 'Discharge recorded' : 'Gusezerera umurwayi byanditswe'
+                  );
+                })
+              }
+              className="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800 disabled:opacity-50"
+            >
+              {en
+                ? 'Discharge patient home'
+                : 'Sezerera umurwayi asubire mu rugo'}
+            </button>
+          ) : (
+            <p className="text-sm font-medium text-emerald-900">
+              {en ? 'Discharged:' : 'Yasezerewe:'}{' '}
+              {c.hospitalDischargeDateTime
+                ? new Date(c.hospitalDischargeDateTime).toLocaleString()
+                : '—'}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Step 1 onward — only when severe malaria test is positive */}
+      {dhPositive && (
+        <>
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
           {en
@@ -837,7 +1012,7 @@ function DistrictHospitalPathway({
             }
             className="rounded-xl bg-[color:var(--role-accent)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
           >
-            {en ? 'Yes — treatment received' : 'Yego — umuti wakiriwe'}
+            {en ? 'Yes, treatment received' : 'Yego, umuti yawuhawe'}
           </button>
           <button
             type="button"
@@ -845,7 +1020,7 @@ function DistrictHospitalPathway({
             onClick={() => setDhArtModalOpen(true)}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
           >
-            {en ? 'No — HC treatment not made' : 'Oya — nta muti watanzwe ku HC'}
+            {en ? 'No, treatment recieved' : 'Oya, nta muti yahawe'}
           </button>
         </div>
         {pre === false && (
@@ -1286,9 +1461,11 @@ function DistrictHospitalPathway({
           </div>
         </>
       )}
+        </>
+      )}
 
       {/* Referral — only after “not improving”; hide after discharge */}
-      {!discharged && clinicalCourse === 'not_improving' && (
+      {!discharged && clinicalCourse === 'not_improving' && dhPositive && (
         <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-6 shadow-sm space-y-4">
           <h3 className="flex items-center gap-2 text-sm font-bold text-rose-950">
             <ArrowUpRightIcon size={18} />
@@ -1310,19 +1487,17 @@ function DistrictHospitalPathway({
             <select
               value={referralTransport}
               onChange={(e) =>
-                setReferralTransport(
-                  e.target.value as '' | 'Self' | 'With relative' | 'Ambulance'
-                )
+                setReferralTransport(e.target.value as DhTransportSelection)
               }
               disabled={transferring}
               className="w-full max-w-sm rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm text-slate-900"
             >
               <option value="">{en ? 'Select transport…' : 'Hitamo uko ajyanwa…'}</option>
-              <option value="Self">{en ? 'Self' : 'Yiyijyaniye'}</option>
-              <option value="With relative">
-                {en ? 'With relative' : 'Aherekejwe n umuvandimwe'}
-              </option>
-              <option value="Ambulance">{en ? 'Ambulance' : 'Ambulansi'}</option>
+              {FACILITY_TRANSPORT_VALUES.map((opt) => (
+                <option key={opt} value={opt}>
+                  {en ? FACILITY_TRANSPORT_LABELS[opt].en : FACILITY_TRANSPORT_LABELS[opt].rw}
+                </option>
+              ))}
             </select>
           </div>
           <button

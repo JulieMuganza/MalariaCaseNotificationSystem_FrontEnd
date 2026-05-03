@@ -26,6 +26,7 @@ export function HCTriageQueue() {
   const location = useLocation();
   const base = useFirstLineBasePath();
   const { user } = useAuth();
+  const isHealthPost = user?.role === 'Local Clinic';
   const { cases, loading, patchCase } = useCasesApi();
   const { i18n } = useTranslation();
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
@@ -70,8 +71,12 @@ export function HCTriageQueue() {
           </h1>
           <p className={hcPage.desc}>
             {en
-              ? 'Triage new referrals and continue care for patients already received at the health center.'
-              : 'Gusuzuma no gukomeza ubuvuzi.'}
+              ? isHealthPost
+                ? 'Triage new referrals and continue care for patients already received at the health post.'
+                : 'Triage new referrals and continue care for patients already received at the health center.'
+              : isHealthPost
+                ? 'Gusuzuma no gukomeza ubuvuzi bw’abarwayi bakiriwe ku Ivuriro Riciriritse.'
+                : 'Gusuzuma no gukomeza ubuvuzi.'}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -81,7 +86,14 @@ export function HCTriageQueue() {
           </div>
           <div className={hcPage.pill}>
             <StethoscopeIcon size={16} strokeWidth={2} />
-            {atHc.length} {en ? 'at HC' : 'ku kigo'}
+            {atHc.length}{' '}
+            {en
+              ? isHealthPost
+                ? 'at health post'
+                : 'at health center'
+              : isHealthPost
+                ? 'ku Ivuriro Riciriritse'
+                : 'ku kigo'}
           </div>
         </div>
       </div>
@@ -107,7 +119,13 @@ export function HCTriageQueue() {
               : 'text-gray-500 hover:text-gray-800'
           }`}
         >
-          {en ? 'Active at health center' : 'Ku kigo'}
+          {en
+            ? isHealthPost
+              ? 'Active at health post'
+              : 'Active at health center'
+            : isHealthPost
+              ? 'Ku Ivuriro Riciriritse'
+              : 'Ku kigo'}
         </button>
       </div>
 
@@ -126,7 +144,9 @@ export function HCTriageQueue() {
                   ? 'No cases awaiting triage'
                   : 'Nta muntu uri ku rutonde'
                 : en
-                  ? 'No patients marked as received at this health center'
+                  ? isHealthPost
+                    ? 'No patients marked as received at this health post'
+                    : 'No patients marked as received at this health center'
                   : 'Nta murwayi yakiriwe'}
             </p>
             {tab === 'at_hc' && triageNeeded.length > 0 && (
@@ -160,7 +180,7 @@ export function HCTriageQueue() {
                     <h3 className="text-base font-bold text-gray-900 truncate tracking-tight">
                       {c.patientName}
                     </h3>
-                    <StatusBadge status={c.status} />
+                    <StatusBadge status={c.status} isHealthPost={isHealthPost} />
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
                     <span>
@@ -189,9 +209,13 @@ export function HCTriageQueue() {
                             status: 'HC Received',
                             hcPatientReceivedDateTime: new Date().toISOString(),
                             timelineEvent: {
-                              event: 'Patient received at Health Center',
-                              actorName: user?.name ?? 'Health Center',
-                              actorRole: 'Health Center',
+                              event: isHealthPost
+                                ? 'Patient received at Health Post'
+                                : 'Patient received at Health Center',
+                              actorName:
+                                user?.name ??
+                                (isHealthPost ? 'Health Post' : 'Health Center'),
+                              actorRole: isHealthPost ? 'Health Post' : 'Health Center',
                             },
                           });
                           toast.success(en ? 'Encounter started' : 'Yakirijwe');

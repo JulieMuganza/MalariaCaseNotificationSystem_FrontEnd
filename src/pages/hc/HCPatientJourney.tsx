@@ -18,6 +18,7 @@ export function HCPatientJourney() {
   const { patientCode: patientCodeParam } = useParams();
   const navigate = useNavigate();
   const base = useFirstLineBasePath();
+  const isHealthPost = base === '/lc';
   const { i18n } = useTranslation();
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
   const en = language === 'en';
@@ -129,7 +130,7 @@ export function HCPatientJourney() {
                   {c.id} • <span className="font-mono">{c.patientCode}</span>
                 </p>
               </div>
-              <StatusBadge status={c.status} />
+              <StatusBadge status={c.status} isHealthPost={isHealthPost} />
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="flex items-center gap-1.5 text-gray-500">

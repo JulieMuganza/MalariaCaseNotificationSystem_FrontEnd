@@ -25,6 +25,12 @@ function translateTimelineEvent(event: string, en: boolean): string {
       'Gukurikirana/ubuvuzi bwa IV byatangiye (gahunda y\'iminsi 3)',
     'Observation update — treatment adjusted (see management notes)':
       'Ivugurura ryo gukurikirana — ubuvuzi bwahinduwe (reba ibisobanuro)',
+    'District hospital severe malaria test — Positive':
+      "Ikizamini cya malaria y'igikatu ku bitaro by'akarere — Byagaragaye",
+    'District hospital severe malaria test — Negative':
+      "Ikizamini cya malaria y'igikatu ku bitaro by'akarere — Ntabwo byagaragaye",
+    'Patient discharged home — district hospital severe malaria test negative':
+      "Umurwayi yasezerewe asubira mu rugo — ikizamini cyerekana ko malariya y'igikatu ntibagaragaye ku bitaro by'akarere",
   };
   if (exact[e]) return exact[e];
   if (e.toLowerCase().includes('patient referred from health center to district hospital')) {

@@ -54,7 +54,14 @@ const statusConfig: Record<
     dot: 'bg-danger-600'
   }
 };
-export function StatusBadge({ status }: {status: CaseStatus;}) {
+export function StatusBadge({
+  status,
+  isHealthPost,
+}: {
+  status: CaseStatus;
+  /** Local Clinic / health post UI: friendlier label for `HC Received` (status value unchanged). */
+  isHealthPost?: boolean;
+}) {
   const { i18n } = useTranslation();
   const en = !i18n.language.startsWith('rw');
   const config = statusConfig[status] || statusConfig.Pending;
@@ -62,7 +69,13 @@ export function StatusBadge({ status }: {status: CaseStatus;}) {
   const labels: Record<string, string> = {
     Pending: en ? 'Pending' : 'Bitegereje',
     Referred: en ? 'Referred' : 'Byoherejwe',
-    'HC Received': en ? 'HC received' : 'Byakiriwe ku kigonderabuzima',
+    'HC Received': en
+      ? isHealthPost
+        ? 'Received at health post'
+        : 'HC received'
+      : isHealthPost
+        ? 'Yakiriwe ku Ivuriro Riciriritse'
+        : 'Byakiriwe ku kigonderabuzima',
     Escalated: en ? 'Escalated' : 'Byazamuwe',
     Admitted: en ? 'Admitted' : 'Byakiriwe mu bitaro',
     Treated: en ? 'Treated' : 'Yazamuwe',

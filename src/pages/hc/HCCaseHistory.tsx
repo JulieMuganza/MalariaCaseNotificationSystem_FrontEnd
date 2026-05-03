@@ -23,6 +23,7 @@ function formatDateTime(iso: string) {
 export function HCCaseHistory() {
   const navigate = useNavigate();
   const base = useFirstLineBasePath();
+  const isHealthPost = base === '/lc';
   const { i18n } = useTranslation();
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
   const en = language === 'en';
@@ -227,7 +228,7 @@ export function HCCaseHistory() {
                     {formatDateTime(c.updatedAt)}
                   </td>
                   <td className="px-4 py-2.5">
-                    <StatusBadge status={c.status} />
+                    <StatusBadge status={c.status} isHealthPost={isHealthPost} />
                   </td>
                   <td className="px-4 py-2.5">
                     {c.reportedToEIDSR ? (

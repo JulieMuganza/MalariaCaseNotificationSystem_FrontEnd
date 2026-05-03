@@ -103,27 +103,33 @@ export interface MalariaCase {
   updatedAt: string;
   timeline: CaseTimeline[];
   chwTransferDateTime?: string;
-  chwReferralTransport?:
-    | 'Walk'
-    | 'Motorcycle'
-    | 'Car'
-    | 'Self'
-    | 'With CHW'
-    | 'Ambulance';
+  chwReferralTransport?: 'Walk' | 'Bicycle' | 'Motor' | 'Car/Bus' | 'Ambulance';
   hcPatientReceivedDateTime?: string;
   hcPatientTransferredToHospitalDateTime?: string;
-  hcReferralToHospitalTransport?: 'Self' | 'With relative' | 'Ambulance';
+  hcReferralToHospitalTransport?:
+    | 'Walk'
+    | 'Bicycle'
+    | 'Motor'
+    | 'Car/Bus'
+    | 'Ambulance';
   hcPreTreatment?: string[];
   hospitalReceivedDateTime?: string;
   hospitalDischargeDateTime?: string;
   severeMalariaTestResult?: 'Positive' | 'Negative';
+  /** Severe malaria test recorded at district hospital (before pre-transfer treatment confirmation). */
+  dhSevereMalariaTestResult?: 'Positive' | 'Negative';
   hospitalManagementMedication?: string;
   finalOutcomeHospital?: 'Recovered' | 'Deceased';
   phaseRetourEligible?: boolean;
   transferredToReferralHospital?: boolean;
   dhTransferredToReferralHospitalDateTime?: string;
   /** District → referral / provincial transfer (same enum values as HC → DH). */
-  dhReferralToReferralHospitalTransport?: 'Self' | 'With relative' | 'Ambulance';
+  dhReferralToReferralHospitalTransport?:
+    | 'Walk'
+    | 'Bicycle'
+    | 'Motor'
+    | 'Car/Bus'
+    | 'Ambulance';
   referralHospitalReceivedDateTime?: string;
 
   /** District hospital: HC pre-transfer received; observation window; oral step-down */

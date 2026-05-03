@@ -6,7 +6,6 @@ import {
   CheckCircleIcon,
   AlertTriangleIcon,
   ActivityIcon,
-  CalculatorIcon,
   PlusIcon,
   ClockIcon,
   StethoscopeIcon,
@@ -25,9 +24,14 @@ import { useCasesApi } from '../../context/CasesContext';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { ConfirmModal } from '../../components/shared/ConfirmModal';
-import type { MalariaCase } from '../../types/domain';
 import { ApiRequestError } from '../../lib/api';
 import { useFirstLineBasePath } from './useFirstLineBasePath';
+import {
+  coerceFacilityTransport,
+  FACILITY_TRANSPORT_LABELS,
+  FACILITY_TRANSPORT_VALUES,
+  type FacilityTransportMode,
+} from '../../constants/facilityTransport';
 
 function errorMessage(e: unknown): string {
   if (e instanceof ApiRequestError) return e.message;
@@ -39,30 +43,15 @@ const sectionHeaderClass =
   'mb-4 flex items-center gap-2 border-b border-gray-100 pb-3';
 const sectionTitleClass = 'text-sm font-semibold text-gray-900';
 
-type HcTransport = NonNullable<MalariaCase['hcReferralToHospitalTransport']>;
-
-const TRANSPORT_OPTIONS: { value: HcTransport; en: string; rw: string }[] = [
-  { value: 'Self', en: 'Self', rw: 'Yenyine' },
-  { value: 'With relative', en: 'With family member', rw: 'Ari kumwe n\'umuryango' },
-  { value: 'Ambulance', en: 'Ambulance', rw: 'Imbangukiragutabara' },
-];
-
-/** How the patient arrived at the first-line facility (same options as former CHW field). */
-const PATIENT_ARRIVAL_OPTIONS = [
-  'Walk',
-  'Bicycle',
-  'Motor',
-  'Car/Bus',
-] as const;
+type HcTransport = FacilityTransportMode;
 const HC_TEST_OPTIONS = ['TDR', 'Blood stream'] as const;
-const PRE_TRANSFER_OPTIONS = ['Injectable', 'Pills', 'Out of stock'] as const;
+const PRE_TRANSFER_OPTIONS = ['Injectable', 'Pills'] as const;
 const PRE_TRANSFER_OPTION_LABELS: Record<
   (typeof PRE_TRANSFER_OPTIONS)[number],
   { en: string; rw: string }
 > = {
   Injectable: { en: 'Injectable', rw: 'Urushinge' },
   Pills: { en: 'Pills', rw: 'Ibinini' },
-  'Out of stock': { en: 'Out of stock', rw: 'Nta miti mu bubiko' },
 };
 
 /** MalariaSync HC pathway is severe malaria only — species fixed for national reporting context */
@@ -142,10 +131,10 @@ export function HCCaseManagement() {
   const [treatmentLog, setTreatmentLog] = useState<{drug: string, dose: string, route: string, time: string}[]>(c?.hcTreatments || []);
   const [selectedDrug, setSelectedDrug] = useState<'Artesunate' | 'Artemeter'>('Artesunate');
   const [referralTransport, setReferralTransport] = useState<HcTransport>(
-    (c?.hcReferralToHospitalTransport as HcTransport) || 'Ambulance'
+    coerceFacilityTransport(c?.hcReferralToHospitalTransport, 'Walk')
   );
   const [arrivalTransport, setArrivalTransport] = useState(
-    c?.transportMode || 'Walk'
+    coerceFacilityTransport(c?.transportMode, 'Walk')
   );
   const [selectedTests, setSelectedTests] = useState<string[]>(
     c?.testType ? c.testType.split(';').map((x) => x.trim()).filter(Boolean) : []
@@ -153,6 +142,9 @@ export function HCCaseManagement() {
   const [preTransferType, setPreTransferType] = useState<
     (typeof PRE_TRANSFER_OPTIONS)[number]
   >('Injectable');
+  const [treatmentGivenAtFacility, setTreatmentGivenAtFacility] = useState<
+    'Yes' | 'No' | ''
+  >('');
 
   const [showEscalate, setShowEscalate] = useState(false);
   const [showDischarge, setShowDischarge] = useState(false);
@@ -169,26 +161,49 @@ export function HCCaseManagement() {
     setTestResult(c.severeMalariaTestResult || '');
     setTreatmentLog(c.hcTreatments || []);
     setReferralTransport(
-      (c.hcReferralToHospitalTransport as HcTransport) || 'Ambulance'
+      coerceFacilityTransport(c.hcReferralToHospitalTransport, 'Walk')
     );
-    setArrivalTransport(c.transportMode || 'Walk');
+    setArrivalTransport(coerceFacilityTransport(c.transportMode, 'Walk'));
     setSelectedTests(
       c.testType ? c.testType.split(';').map((x) => x.trim()).filter(Boolean) : []
     );
-    const modeLine = (c.hcPreTreatment || []).find((line) =>
-      line.toLowerCase().startsWith('pre-transfer mode:')
+    const lines = c.hcPreTreatment ?? [];
+    const noTreatmentRecorded = lines.some((line) =>
+      line.toLowerCase().includes('pre-transfer treatment given: no')
     );
-    const parsedMode = modeLine?.split(':')[1]?.trim();
-    if (
-      parsedMode === 'Injectable' ||
-      parsedMode === 'Pills' ||
-      parsedMode === 'Out of stock'
-    ) {
-      setPreTransferType(parsedMode);
-    } else {
+    if (noTreatmentRecorded) {
+      setTreatmentGivenAtFacility('No');
       setPreTransferType('Injectable');
+    } else {
+      const modeLine = lines.find((line) =>
+        line.toLowerCase().startsWith('pre-transfer mode:')
+      );
+      const parsedMode = modeLine?.split(':')[1]?.trim();
+      if (parsedMode === 'Injectable' || parsedMode === 'Pills') {
+        setPreTransferType(parsedMode);
+        setTreatmentGivenAtFacility('Yes');
+      } else if (parsedMode === 'Out of stock') {
+        setPreTransferType('Injectable');
+        setTreatmentGivenAtFacility('No');
+      } else if (
+        lines.some((line) =>
+          /artesunate|artemeter|mg\/kg|pre-transfer mode:/i.test(line)
+        )
+      ) {
+        setTreatmentGivenAtFacility('Yes');
+        setPreTransferType('Injectable');
+      } else {
+        setTreatmentGivenAtFacility('');
+        setPreTransferType('Injectable');
+      }
     }
   }, [c?.id]);
+
+  useEffect(() => {
+    if (testResult === 'Negative') {
+      setTreatmentGivenAtFacility('');
+    }
+  }, [testResult]);
 
   useEffect(() => {
     if (
@@ -215,9 +230,6 @@ export function HCCaseManagement() {
     const doseLines = treatmentLog.map(
       (e) => `${e.drug} ${e.dose} ${e.route} @ ${new Date(e.time).toLocaleString()}`
     );
-    if (preTransferType === 'Out of stock') {
-      return [modeLine];
-    }
     return [modeLine, ...doseLines];
   }, [preTransferType, treatmentLog]);
 
@@ -230,6 +242,23 @@ export function HCCaseManagement() {
       ),
     []
   );
+
+  /** Must run before any conditional return — same deps as patch payload / treatment UI. */
+  const hcPreTreatmentPayload = useMemo(() => {
+    if (testResult === 'Negative') return [];
+    if (testResult === 'Positive' && treatmentGivenAtFacility === 'No') {
+      return ['Pre-transfer treatment given: No'];
+    }
+    if (testResult === 'Positive' && treatmentGivenAtFacility === 'Yes') {
+      return preTransferLines.length > 0 ? preTransferLines : (c?.hcPreTreatment ?? []);
+    }
+    return preTransferLines.length > 0 ? preTransferLines : (c?.hcPreTreatment ?? []);
+  }, [
+    testResult,
+    treatmentGivenAtFacility,
+    preTransferLines,
+    c?.hcPreTreatment,
+  ]);
 
   if ((loading || fetchingCase) && !c) {
     return (
@@ -272,8 +301,8 @@ export function HCCaseManagement() {
       : c?.symptoms?.length
         ? c.symptoms
         : (c?.chwSymptoms ?? []);
-  const normalizedPreTransferLines =
-    preTransferLines.length > 0 ? preTransferLines : (c?.hcPreTreatment ?? []);
+
+  const severeMalariaPositive = testResult === 'Positive';
 
   const saveClinicalData = async (extraUpdate: Record<string, unknown> = {}) => {
     setSaving(true);
@@ -282,7 +311,7 @@ export function HCCaseManagement() {
         severeMalariaTestResult: testResult || undefined,
         plasmodiumSpecies: HC_MALARIA_SPECIES,
         testType: selectedTests.length ? selectedTests.join('; ') : undefined,
-        hcPreTreatment: normalizedPreTransferLines,
+        hcPreTreatment: hcPreTreatmentPayload,
         transportMode: arrivalTransport,
         symptoms: normalizedSymptoms,
         ...extraUpdate,
@@ -301,6 +330,23 @@ export function HCCaseManagement() {
 
   async function executeEscalationToDistrict() {
     setShowEscalate(false);
+    if (!c) return;
+    if (testResult !== 'Positive') {
+      toast.error(
+        en
+          ? 'Referral applies when severe malaria test is positive.'
+          : 'Kohereza bisaba ko ikizamini giteganya malariya ikomeye ari positive.'
+      );
+      return;
+    }
+    if (treatmentGivenAtFacility === '') {
+      toast.error(
+        en
+          ? 'Select whether treatment was given before referring.'
+          : 'Hitamo ko ubuvuzi bwatanzwe mbere yo kohereza.'
+      );
+      return;
+    }
     if (normalizedSymptoms.length === 0) {
       toast.error(
         en
@@ -311,12 +357,13 @@ export function HCCaseManagement() {
     }
     setSaving(true);
     const now = new Date().toISOString();
+    const referredWithTreatment = treatmentGivenAtFacility === 'Yes';
     try {
       await patchCase(c.id, {
         severeMalariaTestResult: testResult || undefined,
         plasmodiumSpecies: HC_MALARIA_SPECIES,
         testType: selectedTests.length ? selectedTests.join('; ') : undefined,
-        hcPreTreatment: normalizedPreTransferLines,
+        hcPreTreatment: hcPreTreatmentPayload,
         transportMode: arrivalTransport,
         symptoms: normalizedSymptoms,
         status: 'Escalated',
@@ -325,9 +372,13 @@ export function HCCaseManagement() {
         hcPatientReceivedDateTime: c.hcPatientReceivedDateTime ?? now,
         timelineEvent: {
           event:
-            isLocalClinic
-              ? 'Patient referred from health post to district hospital (pre-transfer treatment on record)'
-              : 'Patient referred from health center to district hospital (pre-transfer treatment on record)',
+            referredWithTreatment ?
+              isLocalClinic
+                ? 'Patient referred from health post to district hospital (pre-transfer treatment on record)'
+                : 'Patient referred from health center to district hospital (pre-transfer treatment on record)'
+            : isLocalClinic ?
+              'Patient referred from health post to district hospital (no pre-transfer treatment)'
+            : 'Patient referred from health center to district hospital (no pre-transfer treatment)',
           actorName: user?.name ?? (isLocalClinic ? 'Health Post' : 'Health Center'),
           actorRole: isLocalClinic ? 'Health Post' : 'Health Center',
         },
@@ -365,7 +416,7 @@ export function HCCaseManagement() {
           </button>
           <div className="flex flex-wrap items-center gap-3">
              <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{c.patientName}</h1>
-             <StatusBadge status={c.status} />
+             <StatusBadge status={c.status} isHealthPost={isLocalClinic} />
           </div>
           <p className="mt-2 text-sm font-medium tracking-tight text-gray-500">
             ID: <span className="font-mono text-gray-400">#{c.id.slice(-8).toUpperCase()}</span> • {c.age} {en ? 'Years' : 'Imyaka'} • {c.sex === 'Female' ? (en ? 'Female' : 'Gore') : c.sex === 'Male' ? (en ? 'Male' : 'Gabo') : c.sex} • {c.village}, {c.district}
@@ -465,8 +516,8 @@ export function HCCaseManagement() {
                 ? `How did the patient reach the ${facilityLabelEn.toLowerCase()}?`
                 : `Umurwayi yageze ate kuri ${facilityLabelRw.toLowerCase()}?`}
             </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {PATIENT_ARRIVAL_OPTIONS.map((opt) => (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {FACILITY_TRANSPORT_VALUES.map((opt) => (
                 <button
                   key={opt}
                   type="button"
@@ -477,14 +528,14 @@ export function HCCaseManagement() {
                       : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200'
                   }`}
                 >
-                  {opt}
+                  {en ? FACILITY_TRANSPORT_LABELS[opt].en : FACILITY_TRANSPORT_LABELS[opt].rw}
                 </button>
               ))}
             </div>
           </section>
 
-          {/* Main Assessment Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Main Assessment Grid — equal columns; items-start avoids stretching short blocks */}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-start">
              {/* Triage Section */}
              <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
                 <div className={sectionHeaderClass}>
@@ -558,9 +609,7 @@ export function HCCaseManagement() {
                 )}
              </section>
 
-             {/* Diagnostic + assessment */}
-             <div className="space-y-8">
-                <section className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+             <section className="min-w-0 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
                    <div className={sectionHeaderClass}>
                       <ActivityIcon size={16} className="text-[color:var(--role-accent)]" />
                       <h2 className={sectionTitleClass}>{en ? 'Diagnostic Gate' : 'Ibizamini'}</h2>
@@ -577,10 +626,10 @@ export function HCCaseManagement() {
                            </button>
                          ))}
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs leading-relaxed text-gray-500">
                         {en
-                          ? 'Use this section to diagnose severe malaria. If test is negative and symptoms do not match malaria, complete care and discharge.'
-                          : 'Koresha iki gice mu gusuzuma malariya ikomeye; niba ari negative, sezerera umurwayi.'}
+                          ? 'Use this section to diagnose severe malaria. If the test is negative and symptoms do not match malaria, complete care and discharge.'
+                          : 'Koresha iki gice mu gusuzuma malariya ikomeye. Niba ikizamini ni negative kandi ibimenyetso bitari bya malariya, ranga ubuvuzi ukoreshe gusezerera.'}
                       </p>
                       <div>
                         <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-gray-400">
@@ -612,150 +661,199 @@ export function HCCaseManagement() {
                    </div>
                 </section>
 
-                <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
-                   <div className={sectionHeaderClass}>
-                      <CalculatorIcon size={16} className="text-[color:var(--role-accent)]" />
-                      <h2 className={sectionTitleClass}>{en ? 'Assessment' : 'Ibipimo'}</h2>
-                   </div>
-                   <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">{en ? 'Body Weight (kg)' : 'Ibiro'}</label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          value={weight}
-                          onChange={(e) => setWeight(Number(e.target.value) || '')}
-                          className="w-full bg-gray-50 border-none rounded-xl px-4 py-4 text-2xl font-black text-gray-900 focus:ring-2 focus:ring-[color:var(--role-accent)]/20 transition-all placeholder:text-gray-200"
-                          placeholder="0.0"
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold uppercase text-sm">kg</span>
-                      </div>
-                   </div>
-                </section>
-             </div>
           </div>
 
-          {/* Treatment Log Full Width */}
-          <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
-             <div className={sectionHeaderClass}>
-                <ClockIcon size={16} className="text-[color:var(--role-accent)]" />
-                <h2 className={sectionTitleClass}>{en ? 'Treatment History' : 'Ubuvuzi bw\'ibanze'}</h2>
-             </div>
-             
-             <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-10">
-                <div className="space-y-4">
-                   <div className="flex bg-gray-50 p-1 rounded-xl">
-                      {['Artesunate', 'Artemeter'].map(d => (
-                        <button
-                          key={d}
-                          onClick={() => setSelectedDrug(d as any)}
-                          className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${selectedDrug === d ? 'bg-white text-[color:var(--role-accent)] shadow-sm' : 'text-gray-400'}`}
-                        >
-                          {d}
-                        </button>
-                      ))}
+          {/* Treatment History — full width so dose + log grid has room */}
+          {severeMalariaPositive && (
+                <section className="w-full rounded-2xl border border-gray-100 bg-white p-6 shadow-sm md:p-8">
+                   <div className={sectionHeaderClass}>
+                      <ClockIcon size={16} className="text-[color:var(--role-accent)]" />
+                      <h2 className={sectionTitleClass}>{en ? 'Treatment History' : 'Ubuvuzi bw\'ibanze'}</h2>
                    </div>
-                   
-                   {suggestedDose ? (
-                     <div className="rounded-2xl bg-[color:var(--role-accent)] p-6 text-white shadow-lg">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">{en ? 'Calculated Dose' : 'Dosage'}</p>
-                        <div className="text-4xl font-black mb-4">{suggestedDose.val}<span className="text-sm ml-1 opacity-60">MG</span></div>
-                        <p className="text-xs font-bold leading-tight opacity-80 mb-6">{suggestedDose.label}</p>
-                        <button
-                          onClick={() => {
-                            const newEntry = { drug: selectedDrug, dose: `${suggestedDose.val}${suggestedDose.unit}`, route: selectedDrug === 'Artesunate' ? 'IV/IM' : 'IM', time: new Date().toISOString() };
-                            setTreatmentLog(prev => [...prev, newEntry]);
-                            toast.success(en ? 'Dose added' : 'Dose yongeweho');
-                          }}
-                          className="w-full flex items-center justify-center gap-2 py-3 bg-white rounded-xl text-[color:var(--role-accent)] font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 active:scale-95 transition-all shadow-lg"
-                        >
-                           <PlusIcon size={12} /> {en ? 'Log Dose' : 'Andika'}
-                        </button>
-                     </div>
-                   ) : (
-                     <div className="py-12 border border-dashed border-gray-200 rounded-2xl text-center text-[10px] font-black text-gray-300 uppercase tracking-widest px-6">
-                        {en ? 'Enter weight to calculate dose' : 'Shyiramo ibiro'}
-                     </div>
+
+                   <p className="mb-4 text-xs font-medium text-gray-600">
+                     {en
+                       ? 'Was pre-transfer treatment given at this facility before referral?'
+                       : 'Umuti watangiwe mbere yo kohereza ku bitaro by’akarere?'}
+                   </p>
+                   <div className="mb-6 flex flex-wrap gap-2">
+                     {(['Yes', 'No'] as const).map((opt) => (
+                       <button
+                         key={opt}
+                         type="button"
+                         onClick={() => {
+                           setTreatmentGivenAtFacility(opt);
+                           if (opt === 'No') {
+                             setWeight('');
+                             setTreatmentLog([]);
+                             setPreTransferType('Injectable');
+                           }
+                         }}
+                         className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition ${
+                           treatmentGivenAtFacility === opt
+                             ? 'border-[color:var(--role-accent)] bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]'
+                             : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300'
+                         }`}
+                       >
+                         {opt === 'Yes'
+                           ? en
+                             ? 'Yes,  treatment given'
+                             : 'Yego, hatanzwe umuti'
+                           : en
+                             ? 'No, refer without treatment'
+                             : 'Oya, kohereza nta muti ahawe'}
+                       </button>
+                     ))}
+                   </div>
+
+                   {treatmentGivenAtFacility === 'No' && (
+                     <p className="rounded-xl border border-amber-100 bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
+                       {en
+                         ? 'Referral will send the patient to the district hospital with no pre-transfer treatment recorded. Choose transport and use Refer below.'
+                         : 'Kohereza bizohereza umurwayi ku bitaro by’akarere nta muti watanzwe. Hitamo urugendo uhitemo Kohereza hepfo.'}
+                     </p>
                    )}
 
-                </div>
+                   {treatmentGivenAtFacility === 'Yes' && (
+                   <div className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
+                      <div className="space-y-4">
+                         <p className="text-xs font-semibold text-gray-800">
+                           {en ? 'Assessment' : 'Ibipimo'}
+                         </p>
+                         <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 block">{en ? 'Body Weight (kg)' : 'Ibiro'}</label>
+                            <div className="relative">
+                              <input
+                                type="number"
+                                value={weight}
+                                onChange={(e) => setWeight(Number(e.target.value) || '')}
+                                className="w-full bg-gray-50 border-none rounded-xl px-4 py-4 text-2xl font-black text-gray-900 focus:ring-2 focus:ring-[color:var(--role-accent)]/20 transition-all placeholder:text-gray-200"
+                                placeholder="0.0"
+                              />
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold uppercase text-sm">kg</span>
+                            </div>
+                         </div>
+                         <div className="flex gap-1 bg-gray-50 p-1 rounded-xl">
+                            {['Artesunate', 'Artemeter'].map(d => (
+                              <button
+                                key={d}
+                                type="button"
+                                onClick={() => setSelectedDrug(d as any)}
+                                className={`flex-1 min-w-0 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${selectedDrug === d ? 'bg-white text-[color:var(--role-accent)] shadow-sm' : 'text-gray-400'}`}
+                              >
+                                {d}
+                              </button>
+                            ))}
+                         </div>
+                         
+                         {suggestedDose ? (
+                           <div className="rounded-2xl bg-[color:var(--role-accent)] p-6 text-white shadow-lg">
+                              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">{en ? 'Calculated Dose' : 'Dosage'}</p>
+                              <div className="text-4xl font-black mb-4">{suggestedDose.val}<span className="text-sm ml-1 opacity-60">MG</span></div>
+                              <p className="text-xs font-bold leading-tight opacity-80 mb-6">{suggestedDose.label}</p>
+                              <button
+                                onClick={() => {
+                                  const newEntry = { drug: selectedDrug, dose: `${suggestedDose.val}${suggestedDose.unit}`, route: selectedDrug === 'Artesunate' ? 'IV/IM' : 'IM', time: new Date().toISOString() };
+                                  setTreatmentLog(prev => [...prev, newEntry]);
+                                  toast.success(en ? 'Dose added' : 'Dose yongeweho');
+                                }}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-white rounded-xl text-[color:var(--role-accent)] font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 active:scale-95 transition-all shadow-lg"
+                              >
+                                 <PlusIcon size={12} /> {en ? 'Log Dose' : 'Andika'}
+                              </button>
+                           </div>
+                         ) : (
+                           <div className="py-12 border border-dashed border-gray-200 rounded-2xl text-center text-[10px] font-black text-gray-300 uppercase tracking-widest px-6">
+                              {en ? 'Enter weight to calculate dose' : 'Shyiramo ibiro'}
+                           </div>
+                         )}
 
-                <div className="space-y-3">
-                   {treatmentLog.length === 0 ? (
-                     <div className="py-20 text-center text-xs font-bold text-gray-300 uppercase tracking-widest italic">{en ? 'No records yet' : 'Ntabwo hari amakuru'}</div>
-                   ) : (
-                     <div className="divide-y divide-gray-50 border border-gray-50 rounded-2xl overflow-hidden">
-                        {treatmentLog.slice().reverse().map((entry, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
-                             <div className="flex items-center gap-4">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--role-accent-soft)] text-xs font-semibold text-[color:var(--role-accent)]">{treatmentLog.length - idx}</div>
-                                <div>
-                                   <p className="text-xs font-bold text-gray-900">{entry.drug} • {entry.dose}</p>
-                                   <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">{entry.route} • {new Date(entry.time).toLocaleTimeString()}</p>
-                                </div>
-                             </div>
-                             <div className="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><CheckCircleIcon size={14} /></div>
-                          </div>
-                        ))}
-                     </div>
-                   )}
-
-                   <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                      <h4 className="mb-1 text-sm font-semibold text-gray-900">
-                        {en ? 'Pre-transfer referral' : 'Kohereza mbere'}
-                      </h4>
-
-                      <p className="mb-2 text-xs font-medium text-gray-600">
-                        {en ? 'Pre-transfer treatment mode' : "Uburyo bw'ubuvuzi mbere yo kohereza"}
-                      </p>
-                      <div className="space-y-2">
-                        {PRE_TRANSFER_OPTIONS.map((opt) => (
-                          <label
-                            key={opt}
-                            className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                              preTransferType === opt
-                                ? 'border-[color:var(--role-accent)] bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]'
-                                : 'border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200'
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name="hc-pretransfer-mode"
-                              className="h-4 w-4 border-gray-300 text-[color:var(--role-accent)] focus:ring-[color:var(--role-accent)]/30"
-                              checked={preTransferType === opt}
-                              onChange={() => setPreTransferType(opt)}
-                            />
-                            <span>{en ? PRE_TRANSFER_OPTION_LABELS[opt].en : PRE_TRANSFER_OPTION_LABELS[opt].rw}</span>
-                          </label>
-                        ))}
                       </div>
-                   </section>
-                </div>
-             </div>
-          </section>
+
+                      <div className="space-y-3">
+                         {treatmentLog.length === 0 ? (
+                           <div className="py-8 text-center text-xs font-bold uppercase tracking-widest text-gray-300 italic">{en ? 'No records yet' : 'Ntabwo hari amakuru'}</div>
+                         ) : (
+                           <div className="divide-y divide-gray-50 border border-gray-50 rounded-2xl overflow-hidden">
+                              {treatmentLog.slice().reverse().map((entry, idx) => (
+                                <div key={idx} className="flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors group">
+                                   <div className="flex items-center gap-4">
+                                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[color:var(--role-accent-soft)] text-xs font-semibold text-[color:var(--role-accent)]">{treatmentLog.length - idx}</div>
+                                      <div>
+                                         <p className="text-xs font-bold text-gray-900">{entry.drug} • {entry.dose}</p>
+                                         <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">{entry.route} • {new Date(entry.time).toLocaleTimeString()}</p>
+                                      </div>
+                                   </div>
+                                   <div className="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><CheckCircleIcon size={14} /></div>
+                                </div>
+                              ))}
+                           </div>
+                         )}
+
+                         <section className="rounded-2xl border border-gray-100 bg-gray-50/80 p-5 shadow-sm">
+                            <h4 className="mb-1 text-sm font-semibold text-gray-900">
+                              {en ? 'Pre-transfer referral' : 'Kohereza mbere'}
+                            </h4>
+
+                            <p className="mb-2 text-xs font-medium text-gray-600">
+                              {en ? 'Pre-transfer treatment mode' : "Uburyo bw'ubuvuzi mbere yo kohereza"}
+                            </p>
+                            <div className="space-y-2">
+                              {PRE_TRANSFER_OPTIONS.map((opt) => (
+                                <label
+                                  key={opt}
+                                  className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                                    preTransferType === opt
+                                      ? 'border-[color:var(--role-accent)] bg-[color:var(--role-accent-soft)] text-[color:var(--role-accent)]'
+                                      : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name="hc-pretransfer-mode"
+                                    className="h-4 w-4 border-gray-300 text-[color:var(--role-accent)] focus:ring-[color:var(--role-accent)]/30"
+                                    checked={preTransferType === opt}
+                                    onChange={() => setPreTransferType(opt)}
+                                  />
+                                  <span>{en ? PRE_TRANSFER_OPTION_LABELS[opt].en : PRE_TRANSFER_OPTION_LABELS[opt].rw}</span>
+                                </label>
+                              ))}
+                            </div>
+                         </section>
+                      </div>
+                   </div>
+                   )}
+                </section>
+          )}
+
         </div>
 
         {/* Action Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-6 lg:z-10 lg:self-start">
            <section className="relative overflow-hidden rounded-[32px] bg-[color:var(--role-accent)] p-8 text-white shadow-lg">
               <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
               <h3 className="mb-2 text-base font-semibold text-white">
                 {en ? 'Pre-transfer referral' : 'Kohereza'}
               </h3>
               <p className="text-xs text-gray-400 mb-6 leading-relaxed font-medium">
-                {en
-                  ? 'After pre-transfer treatment, refer to the district hospital. Choose how the patient will travel.'
-                  : 'Nyuma y\'ubuvuzi, kohereza ku bitaro by\'akarere.'}
+                {testResult === 'Negative'
+                  ? en
+                    ? 'Negative severe malaria test: complete care and use home discharge. Referral is only when the test is positive.'
+                    : 'Ikizamini ni negative: sezerera umurwayi. Kohereza ni iyo ikizamini ari positive.'
+                  : en
+                    ? 'When the test is positive, choose treatment history (yes/no), then refer or discharge as appropriate.'
+                    : 'Niba ikizamini ari positive, hitamo ubuvuzi (ego/oya), hanyuma kohereza cyangwa gusezerera.'}
               </p>
 
               <p className="mb-2 text-xs font-medium text-white/70">
                 {en ? 'Transport to district hospital' : 'Urugendo'}
               </p>
               <div className="space-y-2 mb-6">
-                {TRANSPORT_OPTIONS.map((opt) => (
+                {FACILITY_TRANSPORT_VALUES.map((opt) => (
                   <label
-                    key={opt.value}
+                    key={opt}
                     className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                      referralTransport === opt.value
+                      referralTransport === opt
                         ? 'border-white/50 bg-white/15'
                         : 'border-white/15 bg-white/5 hover:bg-white/10'
                     }`}
@@ -764,10 +862,14 @@ export function HCCaseManagement() {
                       type="radio"
                       name="hc-transport"
                       className="h-4 w-4 border-white/40 text-white accent-white focus:ring-white/40"
-                      checked={referralTransport === opt.value}
-                      onChange={() => setReferralTransport(opt.value)}
+                      checked={referralTransport === opt}
+                      onChange={() => setReferralTransport(opt)}
                     />
-                    <span>{en ? opt.en : opt.rw}</span>
+                    <span>
+                      {en
+                        ? FACILITY_TRANSPORT_LABELS[opt].en
+                        : FACILITY_TRANSPORT_LABELS[opt].rw}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -775,8 +877,12 @@ export function HCCaseManagement() {
               <div className="space-y-3">
                  <button
                    type="button"
+                   disabled={
+                     testResult !== 'Positive' ||
+                     treatmentGivenAtFacility === ''
+                   }
                    onClick={() => setShowEscalate(true)}
-                   className="w-full flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group active:scale-[0.98]"
+                   className="w-full flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
                  >
                     <div className="text-left">
                        <p className="text-xs font-black uppercase tracking-widest text-red-400 mb-1">{en ? 'Refer' : 'Ohereza'}</p>

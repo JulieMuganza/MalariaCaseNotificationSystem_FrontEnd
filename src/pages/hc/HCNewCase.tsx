@@ -20,6 +20,7 @@ function cardBtn(active: boolean) {
 export function HCNewCase() {
   const navigate = useNavigate();
   const base = useFirstLineBasePath();
+  const isHealthPost = base === '/lc';
   const { i18n } = useTranslation();
   const language = i18n.language.startsWith('rw') ? 'rw' : 'en';
   const { refresh } = useCasesApi();
@@ -54,9 +55,9 @@ export function HCNewCase() {
         { value: 'No' as const, label: 'Oya' },
       ];
   const insuranceTypeOptions = en
-    ? ['CBHI', 'RAMA', 'MMI', 'Other']
+    ? ['Mutuweli', 'RAMA', 'MMI', 'Other']
     : [
-        { value: 'CBHI', label: 'CBHI' },
+        { value: 'Mutuweli', label: 'Mutuweli' },
         { value: 'RAMA', label: 'RAMA' },
         { value: 'MMI', label: 'MMI' },
         { value: 'Other', label: 'Ibindi' },
@@ -135,7 +136,7 @@ export function HCNewCase() {
           preventionMeasures: [],
           hcPatientReceivedDateTime: new Date().toISOString(),
           chwTransferDateTime: new Date().toISOString(),
-          chwReferralTransport: 'Self',
+          chwReferralTransport: 'Walk',
         }),
       });
       await refresh();
@@ -159,11 +160,23 @@ export function HCNewCase() {
       </button>
 
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <h1 className="text-xl font-bold text-gray-900">{en ? 'New HC direct case' : 'Dosiye nshya ku kigo'}</h1>
+        <h1 className="text-xl font-bold text-gray-900">
+          {en
+            ? isHealthPost
+              ? 'New health post direct case'
+              : 'New HC direct case'
+            : isHealthPost
+              ? 'Dosiye nshya ku Ivuriro Riciriritse'
+              : 'Dosiye nshya ku kigo'}
+        </h1>
         <p className="mt-1 text-sm text-gray-500">
           {en
-            ? 'Register a patient who came directly to the health center (no CHW).'
-            : 'Andikisha umurwayi wageze ku kigo atavuye kuri CHW.'}
+            ? isHealthPost
+              ? 'Register a patient who came directly to the health post (no CHW).'
+              : 'Register a patient who came directly to the health center (no CHW).'
+            : isHealthPost
+              ? 'Andikisha umurwayi wageze ku Ivuriro Riciriritse atavuye kuri CHW.'
+              : 'Andikisha umurwayi wageze ku kigo atavuye kuri CHW.'}
         </p>
         <h2 className="mt-6 text-sm font-semibold uppercase tracking-widest text-gray-500">
           {en ? 'Location / home' : 'Aho atuye'}

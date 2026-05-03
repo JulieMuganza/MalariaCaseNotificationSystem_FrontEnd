@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeftIcon, SendIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -30,6 +30,17 @@ export function HospitalOutcome() {
   const [management, setManagement] = useState('');
   const [notes, setNotes] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!c) return;
+    const fromCase =
+      user?.role === 'Referral Hospital'
+        ? c.severeMalariaTestResult
+        : c.dhSevereMalariaTestResult;
+    setSmResult(fromCase ?? '');
+    setManagement(c.hospitalManagementMedication ?? '');
+  }, [c?.id, user?.role, c?.severeMalariaTestResult, c?.dhSevereMalariaTestResult, c?.hospitalManagementMedication]);
+
   if (loading && !c)
     return <div className="py-12 text-center text-gray-500">{en ? 'Loading…' : 'Birakorwa...'}</div>;
   if (!c)
@@ -61,7 +72,13 @@ export function HospitalOutcome() {
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            {en ? 'Severe malaria result' : 'Ibisubizo bya malariya ikomeye'}
+            {en
+              ? user?.role === 'Referral Hospital'
+                ? 'Severe malaria result (referral hospital)'
+                : 'Severe malaria result (district hospital)'
+              : user?.role === 'Referral Hospital'
+                ? "Ibisubizo bya malariya ikomeye (ibitaro byoherezwaho)"
+                : "Ibisubizo bya malariya ikomeye (ibitaro by'akarere)"}
           </label>
           <div className="grid grid-cols-2 gap-3">
             {(['Positive', 'Negative'] as const).map((r) =>
@@ -174,8 +191,12 @@ export function HospitalOutcome() {
             const deceased = outcome === 'Deceased';
             const recovered = outcome === 'Recovered';
             const stillAdmitted = outcome === 'Admitted' || outcome === 'Improving';
+            const severeField =
+              user?.role === 'Referral Hospital'
+                ? { severeMalariaTestResult: smResult }
+                : { dhSevereMalariaTestResult: smResult };
             await patchCase(c.id, {
-              severeMalariaTestResult: smResult,
+              ...severeField,
               hospitalManagementMedication:
                 smResult === 'Positive' && management.trim()
                   ? management

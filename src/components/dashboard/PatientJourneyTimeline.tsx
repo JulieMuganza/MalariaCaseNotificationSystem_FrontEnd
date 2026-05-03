@@ -26,7 +26,8 @@ function transportIcon(mode?: string) {
   const m = (mode || '').toLowerCase();
   if (m.includes('ambulance')) return Truck;
   if (m.includes('bicycle') || m.includes('bike')) return Bike;
-  if (m.includes('bus') || m.includes('car') || m.includes('motor')) return Bus;
+  if (m.includes('car') || m.includes('bus')) return Bus;
+  if (m === 'motor' || m.includes('motorcycle')) return Bus;
   return Footprints;
 }
 
